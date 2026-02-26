@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -595,21 +596,14 @@ async function loadMessages(id,offset=0){
       }
     }else{content=renderMarkdown(m.content||'')}
     const tokens=m.usage?`<span class="msg-tokens">${m.usage.input}in ${m.usage.output}out</span>`:'';
-    return`<div class="msg msg-${m.type}"><div class="msg-meta"><span>${m.type==='user'?'User':'Assistant'}</span>${m.model?'<span class="model">'+m.model.replace('claude-','')+'</span>':''}${m.timestamp?'<span>'+new Date(m.timestamp).toLocaleTimeString()+'</span>':''}${tokens}</div><div class="msg-content">${content}</div></div>`}).join('');
+    return`<div class="msg msg-${m.type}"><div class="msg-meta"><span>${m.type==='user'?'User':'Assistant'}</span>${m.model?'<span class="model">'+esc(m.model.replace('claude-',''))+'</span>':''}${m.timestamp?'<span>'+esc(new Date(m.timestamp).toLocaleTimeString())+'</span>':''}${tokens}</div><div class="msg-content">${content}</div></div>`}).join('');
   if(offset===0)ml.innerHTML=html;else ml.insertAdjacentHTML('beforeend',html);
   // Load more
   const mp=document.getElementById('msgPag');
-  if(data.total>offset+100){mp.innerHTML=`<button class="btn btn-sm" onclick="loadMessages('${id}',${offset+100})">Load more (${data.total-offset-100} remaining)</button>`}else{mp.innerHTML=''}
+  if(data.total>offset+100){mp.innerHTML=`<button class="btn btn-sm" onclick="loadMessages('${esc(id)}',${offset+100})">Load more (${data.total-offset-100} remaining)</button>`}else{mp.innerHTML=''}
 }
 function sanitizeHtml(html){
-  // Strip dangerous tags while keeping safe formatting
-  return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,'')
-    .replace(/<iframe\b[^>]*>.*?<\/iframe>/gi,'')
-    .replace(/<object\b[^>]*>.*?<\/object>/gi,'')
-    .replace(/<embed\b[^>]*>/gi,'')
-    .replace(/<form\b[^>]*>.*?<\/form>/gi,'')
-    .replace(/\bon\w+\s*=/gi,'data-removed=')
-    .replace(/javascript:/gi,'');
+  return typeof DOMPurify!=='undefined'?DOMPurify.sanitize(html):esc(html);
 }
 function renderMarkdown(text){
   if(!text)return'';
