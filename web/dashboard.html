@@ -188,6 +188,10 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .kb-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.82rem}
 .kb-key{background:var(--bg-3);border:1px solid var(--border);border-radius:4px;padding:1px 8px;font-family:var(--mono);font-size:.75rem}
 
+/* Streamer mode */
+.streamer-mode .sensitive{filter:blur(5px);user-select:none;transition:filter .2s}
+.streamer-mode .sensitive:hover{filter:blur(3px)}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg-4);border-radius:3px}
 
@@ -404,7 +408,7 @@ async function init(){
 function renderProjects(projects){
   const list=document.getElementById('projectList');
   list.innerHTML='<li class="sb-item active" onclick="selectProject(null)" data-slug=""><span>All Projects</span><span class="sb-badge">'+allSessions.length+'</span></li>'+
-    projects.map(p=>'<li class="sb-item" onclick="selectProject(\''+p.slug+'\')" data-slug="'+p.slug+'"><span>'+esc(p.shortName)+'</span><span class="sb-badge">'+p.sessions+'</span></li>').join('');
+    projects.map(p=>'<li class="sb-item" onclick="selectProject(\''+p.slug+'\')" data-slug="'+p.slug+'"><span class="sensitive">'+esc(p.shortName)+'</span><span class="sb-badge">'+p.sessions+'</span></li>').join('');
 }
 function selectProject(slug){
   currentProject=slug;currentPage=0;
@@ -417,7 +421,8 @@ function updateSidebar(){
   document.getElementById('sidebarTiers').innerHTML=
     '<div class="sb-section-title">Classification</div>'+
     [4,3,2,1].map(t=>'<div class="tier-row"><span><span class="dot" style="background:var(--'+(t===4?'green':t===3?'blue':t===2?'yellow':'red')+')"></span>'+tierNames[t]+'</span><span>'+(td[t]||0)+'</span></div>').join('');
-  document.getElementById('sidebarFooter').innerHTML='<span>'+allSessions.length+' sessions &middot; '+fmtBytes(stats.totalSize)+'</span><span style="display:flex;gap:6px;align-items:center"><span style="font-size:.65rem;color:var(--text-3)">v0.1.0</span><a href="https://github.com/ArthurPcd/csesh" target="_blank" rel="noopener" title="GitHub" style="display:flex;color:var(--text-3);transition:color .15s" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-3)\'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></a><span style="cursor:pointer;color:var(--text-3)" onclick="document.getElementById(\'kbHelp\').style.display=\'flex\'" title="Keyboard shortcuts">?</span><button class="info-btn" onclick="document.getElementById(\'infoModal\').style.display=\'flex\'" title="About"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></span>';
+  const isStreamer=document.body.classList.contains('streamer-mode');
+  document.getElementById('sidebarFooter').innerHTML='<span>'+allSessions.length+' sessions &middot; '+fmtBytes(stats.totalSize)+'</span><span style="display:flex;gap:6px;align-items:center"><span style="font-size:.65rem;color:var(--text-3)">v0.1.0</span><button class="info-btn" onclick="toggleStreamer()" title="Streamer mode">'+(isStreamer?'👁‍🗨':'👁')+'</button><a href="https://github.com/ArthurPcd/csesh" target="_blank" rel="noopener" title="GitHub" style="display:flex;color:var(--text-3);transition:color .15s" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-3)\'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></a><span style="cursor:pointer;color:var(--text-3)" onclick="document.getElementById(\'kbHelp\').style.display=\'flex\'" title="Keyboard shortcuts">?</span><button class="info-btn" onclick="document.getElementById(\'infoModal\').style.display=\'flex\'" title="About"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></span>';
 }
 
 // ── Overview ──
@@ -508,7 +513,7 @@ function renderTable(){
     return`<tr class="row-click${sel?' selected':''}" data-idx="${idx}" data-id="${s.id}" onclick="rowClick('${s.id}',event)">
       <td><input type="checkbox" class="chk" ${sel?'checked':''} onchange="toggleSelect('${s.id}',this.checked)" onclick="event.stopPropagation()"></td>
       <td>${date}</td>
-      <td>${esc((s.shortProject||'').slice(0,18))}</td>
+      <td class="sensitive">${esc((s.shortProject||'').slice(0,18))}</td>
       <td>${title} ${tags}</td>
       <td>${s.userMessageCount+s.assistantMessageCount}</td>
       <td>${fmtBytes(s.fileSizeBytes)}</td>
@@ -572,10 +577,10 @@ async function showDetail(id){
     </div>
     <details style="margin:12px 0"><summary style="font-size:.8rem;color:var(--text-2);cursor:pointer">More details</summary>
     <div style="padding:8px 0">
-      <div class="detail-row"><span class="label">ID</span><span class="value" style="font-family:var(--mono);font-size:.75rem">${s.id}</span></div>
+      <div class="detail-row"><span class="label">ID</span><span class="value sensitive" style="font-family:var(--mono);font-size:.75rem">${s.id}</span></div>
       <div class="detail-row"><span class="label">Category</span><span class="value">${s.category}</span></div>
-      <div class="detail-row"><span class="label">Branch</span><span class="value">${esc(s.gitBranch||'—')}</span></div>
-      <div class="detail-row"><span class="label">CWD</span><span class="value">${esc(s.cwd||'—')}</span></div>
+      <div class="detail-row"><span class="label">Branch</span><span class="value sensitive">${esc(s.gitBranch||'—')}</span></div>
+      <div class="detail-row"><span class="label">CWD</span><span class="value sensitive">${esc(s.cwd||'—')}</span></div>
       <div class="detail-row"><span class="label">Version</span><span class="value">${s.version||'—'}</span></div>
       <div class="detail-row"><span class="label">Models</span><span class="value">${(s.models||[]).join(', ')}</span></div>
       <div class="detail-row"><span class="label">Tokens</span><span class="value">${(s.tokenUsage?.input||0).toLocaleString()} in, ${(s.tokenUsage?.output||0).toLocaleString()} out, ${(s.tokenUsage?.cacheRead||0).toLocaleString()} cached</span></div>
@@ -763,6 +768,15 @@ function highlightRow(){
   const row=document.querySelector(`#tableBody tr:nth-child(${localIdx+1})`);
   if(row)row.scrollIntoView({block:'nearest'});
 }
+
+// ── Streamer mode ──
+function toggleStreamer(){
+  const on=document.body.classList.toggle('streamer-mode');
+  localStorage.setItem('csesh-streamer',on?'1':'');
+  updateSidebar();
+  toast(on?'Streamer mode on — sensitive info blurred':'Streamer mode off');
+}
+if(localStorage.getItem('csesh-streamer'))document.body.classList.add('streamer-mode');
 
 init();
 </script>
