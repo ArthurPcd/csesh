@@ -1,6 +1,7 @@
-# Claude Sessions Organizer
+# csesh
 
-[![npm version](https://img.shields.io/npm/v/claude-sessions-organizer.svg)](https://www.npmjs.com/package/claude-sessions-organizer)
+[![CI](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml/badge.svg)](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/csesh.svg)](https://www.npmjs.com/package/csesh)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 
@@ -13,6 +14,7 @@ Navigate, search, analyze, and clean up your Claude Code sessions -- from the co
 - **4-tier classification engine** -- auto-delete, suggested, review, keep -- applied automatically based on session content
 - **Deep analysis** -- tool usage breakdown, thinking metrics, files touched, auto-tags, sub-agent detection
 - **Interactive web dashboard** -- charts, batch operations, keyboard shortcuts, conversation viewer with syntax highlighting
+- **Resume sessions** -- interactive picker to browse and resume any session with `claude --resume`
 - **Custom metadata** -- titles, tags, favorites, notes stored in a separate sidecar (original files never modified)
 - **Safe cleanup** -- trash with restore via manifest; original JSONL files are never deleted directly
 - **Full-text search** across all sessions with project and date filtering
@@ -25,14 +27,20 @@ Navigate, search, analyze, and clean up your Claude Code sessions -- from the co
 
 ```bash
 # Run directly with npx
-npx claude-sessions-organizer web
+npx csesh web
 
 # Or install globally
-npm install -g claude-sessions-organizer
-claude-sessions web
+npm install -g csesh
+csesh web
 ```
 
 The web dashboard opens at `http://localhost:3456` by default.
+
+### Skills.sh
+
+```bash
+npx skills add ArthurPcd/csesh
+```
 
 ---
 
@@ -41,22 +49,22 @@ The web dashboard opens at `http://localhost:3456` by default.
 ### `list` -- List sessions
 
 ```bash
-claude-sessions list                    # latest 50 sessions
-claude-sessions list --limit 100        # custom limit
-claude-sessions list --tier 4           # only "keep" sessions
-claude-sessions list --tier 1           # only auto-delete candidates
-claude-sessions list --tag bugfix       # filter by tag
-claude-sessions list --favorites        # favorites only
-claude-sessions list --project myapp    # filter by project name
-claude-sessions list --sort size        # sort by: date | size | messages | tier
-claude-sessions list --junk             # show only junk sessions (tier 1 + 2)
-claude-sessions list --real             # show only real sessions (tier 4)
+csesh list                    # latest 50 sessions
+csesh list --limit 100        # custom limit
+csesh list --tier 4           # only "keep" sessions
+csesh list --tier 1           # only auto-delete candidates
+csesh list --tag bugfix       # filter by tag
+csesh list --favorites        # favorites only
+csesh list --project myapp    # filter by project name
+csesh list --sort size        # sort by: date | size | messages | tier
+csesh list --junk             # show only junk sessions (tier 1 + 2)
+csesh list --real             # show only real sessions (tier 4)
 ```
 
 ### `show <id>` -- Session detail
 
 ```bash
-claude-sessions show <id>              # full detail with metadata, tokens, cost
+csesh show <id>               # full detail with metadata, tokens, cost
 ```
 
 Displays ID, title, project, date range, duration, message counts, tier, tags, favorites, notes, models, token usage, estimated cost, and file path. Accepts full or partial IDs.
@@ -64,8 +72,8 @@ Displays ID, title, project, date range, duration, message counts, tier, tags, f
 ### `analyze [id]` -- Deep analysis
 
 ```bash
-claude-sessions analyze <id>           # analyze a single session
-claude-sessions analyze                # analyze ALL sessions (may be slow)
+csesh analyze <id>            # analyze a single session
+csesh analyze                 # analyze ALL sessions (may be slow)
 ```
 
 Single-session output includes tool usage bar chart, files touched, thinking block statistics, auto-tags, sub-agent detection, and language identification. Batch analysis prints a summary with tier distribution, top tools across all sessions, and top tags.
@@ -73,16 +81,16 @@ Single-session output includes tool usage bar chart, files touched, thinking blo
 ### `search <query>` -- Full-text search
 
 ```bash
-claude-sessions search "refactor auth"
-claude-sessions search "docker" --project myapp
-claude-sessions search "migration" --from 2025-01-01 --to 2025-06-30
+csesh search "refactor auth"
+csesh search "docker" --project myapp
+csesh search "migration" --from 2025-01-01 --to 2025-06-30
 ```
 
 ### `stats` -- Aggregated statistics
 
 ```bash
-claude-sessions stats                  # global stats
-claude-sessions stats --project myapp  # project-specific
+csesh stats                   # global stats
+csesh stats --project myapp   # project-specific
 ```
 
 Shows total sessions, disk usage, date range, average duration, tier distribution, cleanup potential, message and token totals, estimated cost, model breakdown, top projects, and top tags.
@@ -90,61 +98,73 @@ Shows total sessions, disk usage, date range, average duration, tier distributio
 ### `cleanup` -- Identify and trash junk sessions
 
 ```bash
-claude-sessions cleanup --dry-run      # preview what would be trashed
-claude-sessions cleanup                # interactive cleanup (prompts per tier)
-claude-sessions cleanup --tier1-only   # auto-delete tier 1 only (100% safe)
+csesh cleanup --dry-run       # preview what would be trashed
+csesh cleanup                 # interactive cleanup (prompts per tier)
+csesh cleanup --tier1-only    # auto-delete tier 1 only (100% safe)
 ```
+
+### `resume` -- Resume a session
+
+```bash
+csesh resume                  # interactive session picker
+csesh resume --project myapp  # filter by project
+csesh resume --favorites      # only favorites
+csesh resume --tag urgent     # filter by tag
+csesh resume --limit 10       # show fewer choices
+```
+
+Displays an enriched session list with tier badges, favorites, tags, and project info. Select a session by number and it launches `claude --resume <id>`.
 
 ### `tag <id> <tag>` -- Add a tag
 
 ```bash
-claude-sessions tag a1b2c3d4 bugfix
+csesh tag a1b2c3d4 bugfix
 ```
 
 ### `title <id> <title>` -- Set a custom title
 
 ```bash
-claude-sessions title a1b2c3d4 "Auth refactor session"
+csesh title a1b2c3d4 "Auth refactor session"
 ```
 
 ### `export` -- Export session data
 
 ```bash
-claude-sessions export --format json                # all sessions as JSON to stdout
-claude-sessions export --format csv                 # all sessions as CSV to stdout
-claude-sessions export --format csv --output out.csv  # write to file
-claude-sessions export --session <id>               # single session as Markdown
-claude-sessions export --session <id> --output s.md # single session to file
+csesh export --format json                # all sessions as JSON to stdout
+csesh export --format csv                 # all sessions as CSV to stdout
+csesh export --format csv --output out.csv  # write to file
+csesh export --session <id>               # single session as Markdown
+csesh export --session <id> --output s.md # single session to file
 ```
 
 ### `web` -- Start web dashboard
 
 ```bash
-claude-sessions web                    # start on default port 3456
-claude-sessions web --port 8080        # custom port
+csesh web                     # start on default port 3456
+csesh web --port 8080         # custom port
 ```
 
 ### `trash` -- Manage trashed sessions
 
 ```bash
-claude-sessions trash list             # list all trashed sessions
-claude-sessions trash restore <id>     # restore a session from trash
-claude-sessions trash empty            # permanently delete items older than 30 days
-claude-sessions trash empty --older-than 7   # custom threshold in days
+csesh trash list              # list all trashed sessions
+csesh trash restore <id>      # restore a session from trash
+csesh trash empty             # permanently delete items older than 30 days
+csesh trash empty --older-than 7   # custom threshold in days
 ```
 
 ### `cache` -- Manage the scan cache
 
 ```bash
-claude-sessions cache clear            # clear all cached scan data
-claude-sessions cache stats            # show cache entry count and disk size
+csesh cache clear             # clear all cached scan data
+csesh cache stats             # show cache entry count and disk size
 ```
 
 ---
 
 ## Web Dashboard
 
-Start the dashboard with `claude-sessions web` and open `http://localhost:3456`.
+Start the dashboard with `csesh web` and open `http://localhost:3456`.
 
 ### Overview
 
@@ -197,9 +217,9 @@ Tiers are auto-assigned based on session content (message count, tool usage, dur
 ## Architecture
 
 ```
-claude-sessions-organizer/
+csesh/
   bin/
-    claude-sessions.js          # CLI entry point (commander)
+    csesh.js                    # CLI entry point (commander)
   lib/
     analyzer.js                 # Deep session analysis (tools, thinking, tags)
     cache.js                    # Disk cache with mtime + size invalidation
@@ -214,6 +234,8 @@ claude-sessions-organizer/
   web/
     server.js                   # Native Node.js HTTP server (zero dependencies)
     dashboard.html              # Single-file production dashboard (HTML/CSS/JS)
+  skills/
+    csesh/SKILL.md              # skills.sh skill definition
   config.default.json           # Default configuration
   package.json
   LICENSE

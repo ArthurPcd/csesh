@@ -4,6 +4,16 @@ metadata.json
 trash/
 trash-manifest.json
 
+# Local config overrides (config.default.json is tracked, not this one)
+config.json
+
+# Content drafts — not for the repo
+docs/
+
+# Secrets
+.env
+.env.*
+
 # Dependencies
 node_modules/
 

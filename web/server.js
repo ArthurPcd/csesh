@@ -1,8 +1,8 @@
 /**
- * Claude Sessions Organizer
+ * csesh — Claude Code session manager
  * Copyright (c) 2025-2026 Arthur Pacaud (@ArthurPcd)
  * Licensed under Apache-2.0
- * https://github.com/ArthurPcd/claude-sessions-organizer
+ * https://github.com/ArthurPcd/csesh
  */
 
 import { createServer } from 'http';
@@ -14,7 +14,7 @@ import { getCached, setCached, flushCache, clearCache } from '../lib/cache.js';
 import { classifyAll, junkLabel } from '../lib/classifier.js';
 import { filterSessions } from '../lib/search.js';
 import { computeStats } from '../lib/stats.js';
-import { trashSession, restoreSession, listTrash } from '../lib/cleanup.js';
+import { trashSession, restoreSession, listTrash, deleteFromTrash } from '../lib/cleanup.js';
 import { mergeMetadata, setTitle, addTag, removeTag, toggleFavorite, setNote, setTierOverride, getAllTags, batchSetTag, loadMetadata } from '../lib/metadata.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -381,6 +381,15 @@ async function handleRequest(req, res) {
       return;
     }
 
+    // ── Permanently delete from trash ─────────────────────────────
+    const deleteTrashMatch = path.match(/^\/api\/trash\/([a-f0-9-]+)$/);
+    if (deleteTrashMatch && method === 'DELETE') {
+      const id = deleteTrashMatch[1];
+      const result = await deleteFromTrash(id);
+      send(result);
+      return;
+    }
+
     // 404
     send({ error: 'Not found' }, 404);
 
@@ -394,14 +403,14 @@ export async function startServer(port = 3456) {
   const server = createServer(handleRequest);
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`  Port ${port} is already in use. Try: claude-sessions web --port ${port + 1}`);
+      console.error(`  Port ${port} is already in use. Try: csesh web --port ${port + 1}`);
     } else {
       console.error(`  Server error: ${err.message}`);
     }
     process.exit(1);
   });
   server.listen(port, () => {
-    console.log(`\n  Claude Sessions Dashboard`);
+    console.log(`\n  \u2B21 csesh dashboard`);
     console.log(`  http://localhost:${port}\n`);
     console.log(`  Press Ctrl+C to stop\n`);
   });

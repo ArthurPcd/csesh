@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Claude Sessions Organizer
+ * csesh — Claude Code session manager
  * Copyright (c) 2025-2026 Arthur Pacaud (@ArthurPcd)
  * Licensed under Apache-2.0
- * https://github.com/ArthurPcd/claude-sessions-organizer
+ * https://github.com/ArthurPcd/csesh
  */
 
 import { Command } from 'commander';
@@ -15,16 +15,54 @@ import { getCached, setCached, flushCache, clearCache, cacheStats } from '../lib
 import { classifyAll, junkLabel, tierLabel, TIER_LABELS } from '../lib/classifier.js';
 import { filterSessions } from '../lib/search.js';
 import { computeStats } from '../lib/stats.js';
-import { trashSession, restoreSession, listTrash, emptyTrash } from '../lib/cleanup.js';
+import { trashSession, restoreSession, listTrash, emptyTrash, deleteFromTrash } from '../lib/cleanup.js';
 import { mergeMetadata, setTitle as metaSetTitle, addTag as metaAddTag, removeTag as metaRemoveTag, toggleFavorite, setNote, getAllTags } from '../lib/metadata.js';
 import { formatBytes, formatDuration, formatDate, timeAgo, estimateCost } from '../lib/utils.js';
 import { getConfig } from '../lib/config.js';
 
+const VERSION = '0.1.0';
+const BRAND = '\u2B21'; // ⬡
+
 const program = new Command();
 program
-  .name('claude-sessions')
-  .description('Navigate, search, clean up and analyze Claude Code sessions')
-  .version('1.0.0');
+  .name('csesh')
+  .description('Claude Code session manager')
+  .version(VERSION, '-v, --version');
+
+// ── Custom help formatter ────────────────────────────────────────────────────
+
+program.configureHelp({
+  formatHelp(cmd, helper) {
+    const name = cmd.name();
+    const desc = cmd.description();
+    const cmds = cmd.commands;
+    const opts = cmd.options;
+
+    let out = '';
+    out += `\n  ${chalk.bold(`${BRAND} csesh`)} ${chalk.dim(`v${VERSION}`)}\n`;
+    out += `  ${desc}\n\n`;
+
+    if (cmds.length > 0) {
+      out += `  ${chalk.bold('Commands:')}\n`;
+      const maxLen = Math.max(...cmds.map(c => c.name().length));
+      for (const c of cmds) {
+        out += `    ${chalk.cyan(c.name().padEnd(maxLen + 2))} ${c.description()}\n`;
+      }
+      out += '\n';
+    }
+
+    if (opts.length > 0) {
+      out += `  ${chalk.bold('Options:')}\n`;
+      for (const o of opts) {
+        const flags = o.flags;
+        out += `    ${chalk.cyan(flags.padEnd(24))} ${o.description}\n`;
+      }
+      out += '\n';
+    }
+
+    return out;
+  }
+});
 
 // ── Session loading ──────────────────────────────────────────────────────────
 
@@ -33,6 +71,10 @@ async function loadSessions({ project = null, mode = 'fast', showProgress = true
   const results = [];
   let cached = 0;
   let scanned = 0;
+
+  if (showProgress && files.length > 0) {
+    process.stderr.write(`  ${BRAND} csesh ${chalk.dim(`\u2014 scanning ${files.length} sessions...`)}\n`);
+  }
 
   for (let i = 0; i < files.length; i += 50) {
     const batch = files.slice(i, i + 50);
@@ -117,13 +159,13 @@ program
     });
 
     const table = new Table({
-      head: ['Date', 'Project', 'Title', 'Msgs', 'Size', 'Tier', 'ID'].map(h => chalk.cyan(h)),
+      head: ['DATE', 'PROJECT', 'TITLE', 'MSGS', 'SIZE', 'TIER', 'ID'].map(h => chalk.cyan(h)),
       colWidths: [18, 16, 38, 6, 8, 18, 10],
       wordWrap: true,
     });
 
     for (const s of filtered) {
-      const fav = s.favorite ? chalk.yellow('★ ') : '';
+      const fav = s.favorite ? chalk.yellow('\u2605 ') : '';
       const title = fav + (s.displayTitle || s.title).slice(0, 34);
       table.push([
         formatDate(s.lastTimestamp),
@@ -149,7 +191,7 @@ program
     const sessions = await loadSessions({ showProgress: false });
     const session = sessions.find(s => s.id === id || s.id.startsWith(id));
     if (!session) {
-      console.log(chalk.red(`Session not found: ${id}`));
+      console.log(chalk.red(`  \u2717 Session not found: ${id}`));
       process.exit(1);
     }
 
@@ -158,7 +200,7 @@ program
     console.log(`  ${chalk.cyan('Title:')}     ${session.displayTitle || session.title}`);
     if (session.customTitle) console.log(`  ${chalk.cyan('Original:')}  ${session.title}`);
     console.log(`  ${chalk.cyan('Project:')}   ${session.project}`);
-    console.log(`  ${chalk.cyan('Date:')}      ${formatDate(session.firstTimestamp)} → ${formatDate(session.lastTimestamp)}`);
+    console.log(`  ${chalk.cyan('Date:')}      ${formatDate(session.firstTimestamp)} \u2192 ${formatDate(session.lastTimestamp)}`);
     console.log(`  ${chalk.cyan('Duration:')}  ${formatDuration(session.durationMs)}`);
     console.log(`  ${chalk.cyan('Messages:')}  ${session.userMessageCount} user, ${session.assistantMessageCount} assistant`);
     console.log(`  ${chalk.cyan('Size:')}      ${formatBytes(session.fileSizeBytes)}`);
@@ -170,7 +212,7 @@ program
     if (session.tags?.length > 0) {
       console.log(`  ${chalk.cyan('Tags:')}      ${session.tags.map(t => chalk.magenta(`#${t}`)).join(' ')}`);
     }
-    if (session.favorite) console.log(`  ${chalk.cyan('Favorite:')}  ${chalk.yellow('★ Yes')}`);
+    if (session.favorite) console.log(`  ${chalk.cyan('Favorite:')}  ${chalk.yellow('\u2605 Yes')}`);
     if (session.notes) console.log(`  ${chalk.cyan('Notes:')}     ${session.notes}`);
     console.log(`  ${chalk.cyan('Branch:')}    ${session.gitBranch || 'N/A'}`);
     console.log(`  ${chalk.cyan('CWD:')}       ${session.cwd || 'N/A'}`);
@@ -196,7 +238,7 @@ program
       const files = await findSessionFiles();
       const file = files.find(f => f.id === id || f.id.startsWith(id));
       if (!file) {
-        console.log(chalk.red(`Session not found: ${id}`));
+        console.log(chalk.red(`  \u2717 Session not found: ${id}`));
         process.exit(1);
       }
       process.stderr.write('  Analyzing...\n');
@@ -223,7 +265,7 @@ program
         const sorted = Object.entries(session.toolUsage).sort((a, b) => b[1] - a[1]);
         for (const [tool, count] of sorted) {
           const barLen = Math.round((count / maxCount) * 20);
-          const bar = chalk.cyan('█'.repeat(barLen));
+          const bar = chalk.cyan('\u2588'.repeat(barLen));
           console.log(`    ${tool.padEnd(15)} ${String(count).padStart(4)}  ${bar}`);
         }
       }
@@ -252,7 +294,7 @@ program
         const maxCount = sorted[0]?.[1] || 1;
         for (const [tool, count] of sorted) {
           const barLen = Math.round((count / maxCount) * 25);
-          console.log(`    ${tool.padEnd(15)} ${String(count).padStart(5)}  ${chalk.cyan('█'.repeat(barLen))}`);
+          console.log(`    ${tool.padEnd(15)} ${String(count).padStart(5)}  ${chalk.cyan('\u2588'.repeat(barLen))}`);
         }
       }
 
@@ -288,7 +330,7 @@ program
     }
 
     const table = new Table({
-      head: ['Date', 'Project', 'Title', 'Msgs', 'Tier', 'ID'].map(h => chalk.cyan(h)),
+      head: ['DATE', 'PROJECT', 'TITLE', 'MSGS', 'TIER', 'ID'].map(h => chalk.cyan(h)),
       colWidths: [18, 16, 38, 6, 18, 10],
       wordWrap: true,
     });
@@ -318,15 +360,15 @@ program
     const sessions = await loadSessions({ mode: 'fast' });
     const stats = computeStats(sessions, opts.project);
 
-    console.log(chalk.bold('\n  Claude Sessions Statistics\n'));
+    console.log(chalk.bold(`\n  ${BRAND} csesh \u2014 Statistics\n`));
     console.log(`  ${chalk.cyan('Total sessions:')}    ${stats.totalSessions}`);
     console.log(`  ${chalk.cyan('Total disk:')}        ${stats.totalSizeFormatted}`);
-    console.log(`  ${chalk.cyan('Date range:')}        ${stats.firstDate?.slice(0, 10) || 'N/A'} → ${stats.lastDate?.slice(0, 10) || 'N/A'}`);
+    console.log(`  ${chalk.cyan('Date range:')}        ${stats.firstDate?.slice(0, 10) || 'N/A'} \u2192 ${stats.lastDate?.slice(0, 10) || 'N/A'}`);
     console.log(`  ${chalk.cyan('Avg duration:')}      ${formatDuration(stats.avgDurationMs)}`);
     console.log();
     console.log(`  ${chalk.green('Keep:')} ${stats.tierDistribution[4]}  ${chalk.blue('Review:')} ${stats.tierDistribution[3]}  ${chalk.yellow('Suggested:')} ${stats.tierDistribution[2]}  ${chalk.red('Auto-delete:')} ${stats.tierDistribution[1]}`);
     console.log(`  ${chalk.cyan('Cleanup potential:')} ${stats.junkSizeFormatted}`);
-    if (stats.favoritesCount > 0) console.log(`  ${chalk.yellow('★')} ${stats.favoritesCount} favorites`);
+    if (stats.favoritesCount > 0) console.log(`  ${chalk.yellow('\u2605')} ${stats.favoritesCount} favorites`);
     console.log();
     console.log(`  ${chalk.cyan('Messages:')}  ${stats.totalUserMessages.toLocaleString()} user, ${stats.totalAssistantMessages.toLocaleString()} assistant`);
     console.log(`  ${chalk.cyan('Tokens:')}    ${stats.tokens.input.toLocaleString()} in, ${stats.tokens.output.toLocaleString()} out, ${stats.tokens.cacheRead.toLocaleString()} cache read`);
@@ -344,7 +386,7 @@ program
     if (stats.topProjects.length > 0) {
       console.log(chalk.bold('  Top Projects:'));
       const projTable = new Table({
-        head: ['Project', 'Sessions', 'Size'].map(h => chalk.cyan(h)),
+        head: ['PROJECT', 'SESSIONS', 'SIZE'].map(h => chalk.cyan(h)),
         colWidths: [30, 10, 10],
       });
       for (const p of stats.topProjects.slice(0, 10)) {
@@ -374,18 +416,18 @@ program
     const tier2 = sessions.filter(s => s.tier === 2);
 
     if (tier1.length === 0 && tier2.length === 0) {
-      console.log(chalk.green('  No junk sessions found!'));
+      console.log(chalk.green(`  \u2713 No junk sessions found!`));
       return;
     }
 
     // Show Tier 1
     if (tier1.length > 0) {
       const size1 = tier1.reduce((s, x) => s + x.fileSizeBytes, 0);
-      console.log(chalk.bold(`\n  Tier 1 — Auto-delete (${tier1.length} sessions, ${formatBytes(size1)})`));
+      console.log(chalk.bold(`\n  Tier 1 \u2014 Auto-delete (${tier1.length} sessions, ${formatBytes(size1)})`));
       console.log(chalk.dim('  Empty, hook-only, or snapshot-only sessions. 100% safe to remove.\n'));
 
       const table1 = new Table({
-        head: ['Date', 'Project', 'Reason', 'Size'].map(h => chalk.cyan(h)),
+        head: ['DATE', 'PROJECT', 'REASON', 'SIZE'].map(h => chalk.cyan(h)),
         colWidths: [14, 16, 40, 8],
         wordWrap: true,
       });
@@ -404,11 +446,11 @@ program
     // Show Tier 2
     if (tier2.length > 0 && !opts.tier1Only) {
       const size2 = tier2.reduce((s, x) => s + x.fileSizeBytes, 0);
-      console.log(chalk.bold(`\n  Tier 2 — Suggested delete (${tier2.length} sessions, ${formatBytes(size2)})`));
+      console.log(chalk.bold(`\n  Tier 2 \u2014 Suggested delete (${tier2.length} sessions, ${formatBytes(size2)})`));
       console.log(chalk.dim('  Short/abandoned sessions. Quick review recommended.\n'));
 
       const table2 = new Table({
-        head: ['Date', 'Project', 'Title', 'Reason', 'Size'].map(h => chalk.cyan(h)),
+        head: ['DATE', 'PROJECT', 'TITLE', 'REASON', 'SIZE'].map(h => chalk.cyan(h)),
         colWidths: [14, 14, 25, 25, 8],
         wordWrap: true,
       });
@@ -445,7 +487,7 @@ program
         for (const s of tier1) {
           try { await trashSession(s, 'cleanup-tier1'); trashed++; } catch {}
         }
-        console.log(chalk.green(`  Trashed ${trashed} Tier 1 sessions`));
+        console.log(chalk.green(`  \u2713 Trashed ${trashed} Tier 1 sessions`));
       }
     }
 
@@ -462,12 +504,12 @@ program
         for (const s of tier2) {
           try { await trashSession(s, 'cleanup-tier2'); trashed++; } catch {}
         }
-        console.log(chalk.green(`  Trashed ${trashed} Tier 2 sessions`));
+        console.log(chalk.green(`  \u2713 Trashed ${trashed} Tier 2 sessions`));
       }
     }
 
     await clearCache();
-    console.log(chalk.dim('\n  Use "claude-sessions trash list" to review, "trash restore <id>" to undo'));
+    console.log(chalk.dim('\n  Use "csesh trash list" to review, "csesh trash restore <id>" to undo'));
   });
 
 // ── TAG ──────────────────────────────────────────────────────────────────────
@@ -479,11 +521,11 @@ program
     const sessions = await loadSessions({ showProgress: false });
     const session = sessions.find(s => s.id === id || s.id.startsWith(id));
     if (!session) {
-      console.log(chalk.red(`Session not found: ${id}`));
+      console.log(chalk.red(`  \u2717 Session not found: ${id}`));
       process.exit(1);
     }
     await metaAddTag(session.id, tag);
-    console.log(chalk.green(`  Tagged ${session.id.slice(0, 8)} with ${chalk.magenta('#' + tag)}`));
+    console.log(chalk.green(`  \u2713 Tagged ${session.id.slice(0, 8)} with ${chalk.magenta('#' + tag)}`));
   });
 
 // ── TITLE ────────────────────────────────────────────────────────────────────
@@ -495,11 +537,11 @@ program
     const sessions = await loadSessions({ showProgress: false });
     const session = sessions.find(s => s.id === id || s.id.startsWith(id));
     if (!session) {
-      console.log(chalk.red(`Session not found: ${id}`));
+      console.log(chalk.red(`  \u2717 Session not found: ${id}`));
       process.exit(1);
     }
     await metaSetTitle(session.id, title);
-    console.log(chalk.green(`  Title set: "${title}"`));
+    console.log(chalk.green(`  \u2713 Title updated`));
   });
 
 // ── EXPORT ───────────────────────────────────────────────────────────────────
@@ -516,7 +558,7 @@ program
       const sessions = await loadSessions({ showProgress: false });
       const session = sessions.find(s => s.id === opts.session || s.id.startsWith(opts.session));
       if (!session) {
-        console.log(chalk.red(`Session not found: ${opts.session}`));
+        console.log(chalk.red(`  \u2717 Session not found: ${opts.session}`));
         process.exit(1);
       }
       const { messages } = await readMessages(session.filePath, { limit: 10000 });
@@ -531,7 +573,7 @@ program
       if (opts.output) {
         const { writeFile } = await import('fs/promises');
         await writeFile(opts.output, md);
-        console.log(chalk.green(`  Exported to ${opts.output}`));
+        console.log(chalk.green(`  \u2713 Exported to ${opts.output}`));
       } else {
         process.stdout.write(md);
       }
@@ -561,7 +603,7 @@ program
       if (opts.output) {
         const { writeFile } = await import('fs/promises');
         await writeFile(opts.output, csv);
-        console.log(chalk.green(`  Exported ${sessions.length} sessions to ${opts.output}`));
+        console.log(chalk.green(`  \u2713 Exported ${sessions.length} sessions to ${opts.output}`));
       } else {
         process.stdout.write(csv);
       }
@@ -570,10 +612,77 @@ program
       if (opts.output) {
         const { writeFile } = await import('fs/promises');
         await writeFile(opts.output, data);
-        console.log(chalk.green(`  Exported ${sessions.length} sessions to ${opts.output}`));
+        console.log(chalk.green(`  \u2713 Exported ${sessions.length} sessions to ${opts.output}`));
       } else {
         process.stdout.write(data);
       }
+    }
+  });
+
+// ── RESUME ──────────────────────────────────────────────────────────────────
+
+program
+  .command('resume')
+  .description('Pick a session and resume it in Claude Code')
+  .option('-p, --project <name>', 'Filter by project')
+  .option('-n, --limit <n>', 'Number of sessions to show', parseInt, 20)
+  .option('--favorites', 'Show only favorites')
+  .option('--tag <tag>', 'Filter by tag')
+  .action(async (opts) => {
+    const sessions = await loadSessions({ project: opts.project });
+
+    const { sessions: filtered } = filterSessions(sessions, {
+      project: opts.project,
+      tag: opts.tag,
+      favorite: opts.favorites || null,
+      sort: 'date',
+      limit: opts.limit,
+    });
+
+    if (filtered.length === 0) {
+      console.log(chalk.yellow('  No sessions found'));
+      return;
+    }
+
+    console.log(`\n  ${BRAND} ${chalk.bold('csesh resume')}\n`);
+
+    for (let i = 0; i < filtered.length; i++) {
+      const s = filtered[i];
+      const num = String(i + 1).padStart(3);
+      const fav = s.favorite ? chalk.yellow('\u2605') : ' ';
+      const badge = tierBadge(s.tier);
+      const title = (s.displayTitle || s.title).slice(0, 50);
+      const tags = (s.tags || []).slice(0, 3).map(t => chalk.magenta(`#${t}`)).join(' ');
+      const date = s.lastTimestamp?.slice(0, 10) || '';
+
+      console.log(`  ${chalk.dim(num)}  ${fav} ${badge}  ${title} ${tags}`);
+      console.log(`       ${chalk.dim(s.shortProject)} ${chalk.dim('\u00b7')} ${chalk.dim(date)}`);
+    }
+
+    console.log();
+
+    const readline = await import('readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const answer = await new Promise(resolve => {
+      rl.question(chalk.cyan(`  Select session (1-${filtered.length}): `), resolve);
+    });
+    rl.close();
+
+    const idx = parseInt(answer) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= filtered.length) {
+      console.log(chalk.red('  \u2717 Invalid selection'));
+      process.exit(1);
+    }
+
+    const selected = filtered[idx];
+    console.log(chalk.green(`  \u2713 Resuming: ${selected.displayTitle || selected.title}`));
+    console.log();
+
+    const { execSync } = await import('child_process');
+    try {
+      execSync(`claude --resume ${selected.id}`, { stdio: 'inherit' });
+    } catch {
+      // claude exits with non-zero on user interrupt, that's fine
     }
   });
 
@@ -589,7 +698,7 @@ trashCmd.command('list').description('List trashed sessions').action(async () =>
   }
 
   const table = new Table({
-    head: ['Trashed', 'Project', 'Title', 'Score', 'Size', 'ID'].map(h => chalk.cyan(h)),
+    head: ['TRASHED', 'PROJECT', 'TITLE', 'SCORE', 'SIZE', 'ID'].map(h => chalk.cyan(h)),
     colWidths: [14, 14, 35, 7, 8, 10],
     wordWrap: true,
   });
@@ -614,22 +723,50 @@ trashCmd.command('restore <id>').description('Restore a session from trash').act
     const items = await listTrash();
     const match = items.find(i => i.id === id || i.id.startsWith(id));
     if (!match) {
-      console.log(chalk.red(`  Session not found in trash: ${id}`));
+      console.log(chalk.red(`  \u2717 Session not found in trash: ${id}`));
       process.exit(1);
     }
     const result = await restoreSession(match.id);
-    console.log(chalk.green(`  Restored ${result.id} → ${result.restoredTo}`));
+    console.log(chalk.green(`  \u2713 Restored ${result.id} \u2192 ${result.restoredTo}`));
     await clearCache();
   } catch (err) {
-    console.log(chalk.red(`  Error: ${err.message}`));
+    console.log(chalk.red(`  \u2717 Error: ${err.message}`));
+  }
+});
+
+trashCmd.command('delete <id>').description('Permanently delete a session from trash').action(async (id) => {
+  try {
+    const items = await listTrash();
+    const match = items.find(i => i.id === id || i.id.startsWith(id));
+    if (!match) {
+      console.log(chalk.red(`  \u2717 Session not found in trash: ${id}`));
+      process.exit(1);
+    }
+
+    const readline = await import('readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ans = await new Promise(resolve => {
+      rl.question(chalk.yellow(`  Permanently delete "${match.title || match.id}"? This cannot be undone. (y/N) `), resolve);
+    });
+    rl.close();
+
+    if (ans.toLowerCase() !== 'y') {
+      console.log(chalk.dim('  Cancelled'));
+      return;
+    }
+
+    await deleteFromTrash(match.id);
+    console.log(chalk.green(`  \u2713 Permanently deleted ${match.id.slice(0, 8)}`));
+  } catch (err) {
+    console.log(chalk.red(`  \u2717 Error: ${err.message}`));
   }
 });
 
 trashCmd.command('empty').description('Permanently delete old trashed sessions')
-  .option('--older-than <days>', 'Days threshold', parseInt, 30)
+  .option('--older-than <days>', 'Days threshold (0 = all)', parseInt, 30)
   .action(async (opts) => {
     const result = await emptyTrash(opts.olderThan);
-    console.log(chalk.green(`  Removed ${result.removed} items, ${result.remaining} remaining`));
+    console.log(chalk.green(`  \u2713 Removed ${result.removed} items, ${result.remaining} remaining`));
   });
 
 // ── WEB ──────────────────────────────────────────────────────────────────────
@@ -647,7 +784,7 @@ const cacheCmd = program.command('cache').description('Manage scan cache');
 
 cacheCmd.command('clear').description('Clear the scan cache').action(async () => {
   await clearCache();
-  console.log(chalk.green('  Cache cleared'));
+  console.log(chalk.green('  \u2713 Cache cleared'));
 });
 
 cacheCmd.command('stats').description('Show cache statistics').action(async () => {

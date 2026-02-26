@@ -1,14 +1,14 @@
-# Contributing to Claude Sessions Organizer
+# Contributing to csesh
 
 Thanks for your interest in contributing! Here's how to get started.
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/ArthurPcd/claude-sessions-organizer.git
-cd claude-sessions-organizer
+git clone https://github.com/ArthurPcd/csesh.git
+cd csesh
 npm install
-npm link  # makes `claude-sessions` available globally
+npm link  # makes `csesh` available globally
 ```
 
 ## Code Style
@@ -23,7 +23,7 @@ npm link  # makes `claude-sessions` available globally
 
 1. Create a branch from `main`
 2. Make your changes
-3. Test the CLI commands: `claude-sessions list`, `claude-sessions web`
+3. Test the CLI commands: `csesh list`, `csesh web`
 4. Test the web dashboard interactions
 5. Submit a PR
 
@@ -36,8 +36,8 @@ npm link  # makes `claude-sessions` available globally
 
 ## Reporting Issues
 
-- Use the [bug report template](https://github.com/ArthurPcd/claude-sessions-organizer/issues/new?template=bug.yml) for bugs
-- Use the [feature request template](https://github.com/ArthurPcd/claude-sessions-organizer/issues/new?template=feature.yml) for ideas
+- Use the [bug report template](https://github.com/ArthurPcd/csesh/issues/new?template=bug.yml) for bugs
+- Use the [feature request template](https://github.com/ArthurPcd/csesh/issues/new?template=feature.yml) for ideas
 - Include your Node.js version and OS
 
 ## License

@@ -1,15 +1,15 @@
 {
-  "name": "claude-sessions-organizer",
-  "version": "1.0.0",
-  "description": "CLI + web dashboard to navigate, search, analyze, and clean up Claude Code sessions",
+  "name": "@arthurpcd/csesh",
+  "version": "0.1.0",
+  "description": "Navigate, search, analyze, and clean up Claude Code sessions",
   "license": "Apache-2.0",
   "author": "Arthur Pacaud <contact@arthurpacaud.dev> (https://jpstudio.fr)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ArthurPcd/claude-sessions-organizer"
+    "url": "git+https://github.com/ArthurPcd/csesh.git"
   },
-  "bugs": "https://github.com/ArthurPcd/claude-sessions-organizer/issues",
-  "homepage": "https://github.com/ArthurPcd/claude-sessions-organizer#readme",
+  "bugs": "https://github.com/ArthurPcd/csesh/issues",
+  "homepage": "https://github.com/ArthurPcd/csesh#readme",
   "funding": "https://github.com/sponsors/ArthurPcd",
   "type": "module",
   "engines": {
@@ -19,7 +19,7 @@
     "claude",
     "claude-code",
     "sessions",
-    "organizer",
+    "csesh",
     "cli",
     "dashboard",
     "analyzer",
@@ -30,12 +30,12 @@
     "bin/",
     "lib/",
     "web/",
+    "skills/",
     "config.default.json",
     "LICENSE"
   ],
   "bin": {
-    "claude-sessions": "./bin/claude-sessions.js",
-    "claude-sessions-organizer": "./bin/claude-sessions.js"
+    "csesh": "bin/csesh.js"
   },
   "dependencies": {
     "chalk": "^5.3.0",

@@ -15,7 +15,7 @@ body:
       label: Steps to reproduce
       description: How can we reproduce this?
       placeholder: |
-        1. Run `claude-sessions ...`
+        1. Run `csesh ...`
         2. Click on ...
         3. See error
     validations:

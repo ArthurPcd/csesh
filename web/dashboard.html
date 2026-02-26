@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Sessions</title>
+<title>csesh</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -203,7 +203,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 <body>
 <nav id="sidebar">
   <div class="sb-header" onclick="this.parentElement.classList.toggle('open')">
-    <h1><span>⬡</span> Claude Sessions</h1>
+    <h1><span>⬡</span> csesh</h1>
   </div>
   <div class="sb-search">
     <div class="sb-search-wrap">
@@ -317,8 +317,8 @@ input:focus,textarea:focus{border-color:var(--accent)}
 
 <div id="infoModal" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
-    <h3>Claude Sessions Organizer</h3>
-    <div class="subtitle">v1.0.0 — indie dev tool</div>
+    <h3>csesh</h3>
+    <div class="subtitle">v0.1.0 — Claude Code session manager</div>
     <div class="info-author">Arthur Pacaud</div>
     <div class="info-handle">@arthurpcd</div>
     <div class="info-links">
@@ -339,12 +339,12 @@ input:focus,textarea:focus{border-color:var(--accent)}
     </div>
     <div style="margin:12px 0;padding:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius)">
       <div style="font-size:.78rem;font-weight:600;margin-bottom:6px">Open Source</div>
-      <a href="https://github.com/ArthurPcd/claude-sessions-organizer" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--accent);margin-bottom:4px">
+      <a href="https://github.com/ArthurPcd/csesh" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--accent);margin-bottom:4px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-        ArthurPcd/claude-sessions-organizer
+        ArthurPcd/csesh
       </a>
       <div style="display:flex;gap:8px;font-size:.72rem">
-        <a href="https://github.com/ArthurPcd/claude-sessions-organizer" target="_blank" rel="noopener" style="color:var(--text-3)">Star on GitHub</a>
+        <a href="https://github.com/ArthurPcd/csesh" target="_blank" rel="noopener" style="color:var(--text-3)">Star on GitHub</a>
         <a href="https://github.com/sponsors/ArthurPcd" target="_blank" rel="noopener" style="color:var(--text-3)">Sponsor</a>
       </div>
     </div>
@@ -409,7 +409,7 @@ function updateSidebar(){
   document.getElementById('sidebarTiers').innerHTML=
     '<div class="sb-section-title">Classification</div>'+
     [4,3,2,1].map(t=>'<div class="tier-row"><span><span class="dot" style="background:var(--'+(t===4?'green':t===3?'blue':t===2?'yellow':'red')+')"></span>'+tierNames[t]+'</span><span>'+(td[t]||0)+'</span></div>').join('');
-  document.getElementById('sidebarFooter').innerHTML='<span>'+allSessions.length+' sessions &middot; '+fmtBytes(stats.totalSize)+'</span><span style="display:flex;gap:6px;align-items:center"><span style="font-size:.65rem;color:var(--text-3)">v1.0.0</span><a href="https://github.com/ArthurPcd/claude-sessions-organizer" target="_blank" rel="noopener" title="GitHub" style="display:flex;color:var(--text-3);transition:color .15s" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-3)\'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></a><span style="cursor:pointer;color:var(--text-3)" onclick="document.getElementById(\'kbHelp\').style.display=\'flex\'" title="Keyboard shortcuts">?</span><button class="info-btn" onclick="document.getElementById(\'infoModal\').style.display=\'flex\'" title="About"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></span>';
+  document.getElementById('sidebarFooter').innerHTML='<span>'+allSessions.length+' sessions &middot; '+fmtBytes(stats.totalSize)+'</span><span style="display:flex;gap:6px;align-items:center"><span style="font-size:.65rem;color:var(--text-3)">v0.1.0</span><a href="https://github.com/ArthurPcd/csesh" target="_blank" rel="noopener" title="GitHub" style="display:flex;color:var(--text-3);transition:color .15s" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-3)\'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></a><span style="cursor:pointer;color:var(--text-3)" onclick="document.getElementById(\'kbHelp\').style.display=\'flex\'" title="Keyboard shortcuts">?</span><button class="info-btn" onclick="document.getElementById(\'infoModal\').style.display=\'flex\'" title="About"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></span>';
 }
 
 // ── Overview ──
@@ -455,13 +455,13 @@ function renderTabs(){
   const tabs=[{id:'all',label:'All'},{id:'keep',label:'Keep'},{id:'review',label:'Review'},{id:'suggested',label:'Suggested'},{id:'auto-delete',label:'Auto-delete'},{id:'favorites',label:'★'},{id:'trash',label:'Trash'}];
   document.getElementById('tabs').innerHTML=tabs.map(t=>`<button class="tab${currentTab===t.id?' active':''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('');
 }
-function setTab(id){currentTab=id;currentPage=0;renderTabs();if(id==='trash'){showTrash()}else{renderTable()}}
+function setTab(id){currentTab=id;currentPage=0;focusIdx=-1;renderTabs();if(id==='trash'){showTrash()}else{renderTable()}}
 
 // ── List View ──
 function showList(){
   ['overview','detail','trashView'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('listView').style.display='';
-  currentPage=0;renderTabs();renderTable();
+  currentPage=0;focusIdx=-1;renderTabs();renderTable();
 }
 function showOverview(){
   ['listView','detail','trashView'].forEach(id=>document.getElementById(id).style.display='none');
@@ -537,10 +537,11 @@ let currentDetailId=null,msgOffset=0;
 async function showDetail(id){
   currentDetailId=id;msgOffset=0;
   ['overview','listView','trashView'].forEach(x=>document.getElementById(x).style.display='none');
-  document.getElementById('detail').style.display='';
+  document.getElementById('detail').style.display='block';
   document.getElementById('detailInner').innerHTML='<div style="text-align:center;padding:40px;color:var(--text-3)">Loading session...</div>';
   document.getElementById('msgList').innerHTML='';
-  const s=await api(`/api/sessions/${id}`);
+  let s;
+  try{s=await api(`/api/sessions/${id}`)}catch(e){toast('Failed to load session','error');goBack();return;}
   if(!s||s.error){toast(s?.error||'Session not found','error');goBack();return;}
   const tags=(s.tags||[]).map(t=>`<span class="tag">#${esc(t)} <span class="x" data-sid="${s.id}" data-tag="${esc(t)}" onclick="removeTagFromSession(this.dataset.sid,this.dataset.tag)">×</span></span>`).join('');
   const autoTags=(s.autoTags||[]).map(t=>`<span class="tag" style="opacity:.6">#${esc(t)}</span>`).join('');
@@ -623,14 +624,7 @@ function goBack(){
 
 // ── Row click (selection mode vs detail) ──
 function rowClick(id,event){
-  if(selectedIds.size>0){
-    // Selection mode active — toggle this row
-    const was=selectedIds.has(id);
-    if(was)selectedIds.delete(id);else selectedIds.add(id);
-    renderTable();
-  }else{
-    showDetail(id);
-  }
+  showDetail(id);
 }
 
 // ── Actions ──
@@ -703,13 +697,18 @@ async function showTrash(){
     <td>${i.trashedAt?.slice(0,10)||'—'}</td><td>${esc(i.project||'')}</td>
     <td>${esc((i.title||'').slice(0,45))}</td><td>${tierBadge(i.junkScore>=.6?1:i.junkScore>=.3?2:3)}</td>
     <td>${fmtBytes(i.fileSizeBytes||0)}</td>
-    <td><button class="btn btn-sm" onclick="restoreOne('${i.id}')">Restore</button></td>
+    <td><button class="btn btn-sm" onclick="restoreOne('${i.id}')">Restore</button> <button class="btn btn-sm btn-danger" onclick="deleteOne('${i.id}')">Delete</button></td>
   </tr>`).join('');
 }
 async function restoreOne(id){
   await apiPost(`/api/restore/${id}`);
   const d=await api('/api/sessions?limit=5000');allSessions=d.sessions||[];
   showTrash();toast('Session restored');
+}
+async function deleteOne(id){
+  if(!confirm('Permanently delete this session? This cannot be undone.'))return;
+  await apiDel(`/api/trash/${id}`);
+  showTrash();toast('Session permanently deleted');
 }
 
 // ── Global search ──
