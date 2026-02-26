@@ -1,0 +1,45 @@
+{
+  "name": "claude-sessions-organizer",
+  "version": "1.0.0",
+  "description": "CLI + web dashboard to navigate, search, analyze, and clean up Claude Code sessions",
+  "license": "Apache-2.0",
+  "author": "Arthur Pacaud <contact@arthurpacaud.dev> (https://jpstudio.fr)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArthurPcd/claude-sessions-organizer"
+  },
+  "bugs": "https://github.com/ArthurPcd/claude-sessions-organizer/issues",
+  "homepage": "https://github.com/ArthurPcd/claude-sessions-organizer#readme",
+  "funding": "https://github.com/sponsors/ArthurPcd",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "sessions",
+    "organizer",
+    "cli",
+    "dashboard",
+    "analyzer",
+    "cleanup",
+    "npx"
+  ],
+  "files": [
+    "bin/",
+    "lib/",
+    "web/",
+    "config.default.json",
+    "LICENSE"
+  ],
+  "bin": {
+    "claude-sessions": "./bin/claude-sessions.js",
+    "claude-sessions-organizer": "./bin/claude-sessions.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0"
+  }
+}
