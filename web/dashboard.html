@@ -252,6 +252,10 @@ input:focus,textarea:focus{border-color:var(--accent)}
         <div class="chart-box"><h4>Tier Distribution</h4><canvas id="tierChart"></canvas></div>
         <div class="chart-box"><h4>Top Tools</h4><canvas id="toolChart"></canvas></div>
       </div>
+      <div class="charts">
+        <div class="chart-box"><h4>Cost Over Time</h4><canvas id="costChart"></canvas></div>
+        <div class="chart-box"><h4>Top Files</h4><canvas id="filesChart"></canvas></div>
+      </div>
     </div>
 
     <div id="listView" style="display:none">
@@ -445,7 +449,9 @@ function renderOverview(){
     <div class="card"><div class="card-label">Messages</div><div class="card-value">${(stats.totalUserMessages+stats.totalAssistantMessages).toLocaleString()}</div></div>
     <div class="card"><div class="card-label">Est. Cost</div><div class="card-value">$${stats.totalCost.toFixed(2)}</div></div>
     <div class="card"><div class="card-label">Already Saved</div><div class="card-value green">${savedSize>0?fmtBytes(savedSize):'—'}</div><div style="font-size:.65rem;color:var(--text-3)">${stats.trashedCount||0} sessions trashed</div></div>
-    <div class="card"><div class="card-label">Can Save</div><div class="card-value yellow">${fmtBytes(canSave)}</div><div style="font-size:.65rem;color:var(--text-3)">${(td[1]||0)+(td[2]||0)} deletable sessions</div></div>`;
+    <div class="card"><div class="card-label">Can Save</div><div class="card-value yellow">${fmtBytes(canSave)}</div><div style="font-size:.65rem;color:var(--text-3)">${(td[1]||0)+(td[2]||0)} deletable sessions</div></div>
+    <div class="card"><div class="card-label">Avg Cost/Session</div><div class="card-value">$${(stats.avgCostPerSession||0).toFixed(3)}</div></div>
+    <div class="card"><div class="card-label">Avg Messages</div><div class="card-value">${stats.avgMessagesPerSession||0}</div></div>`;
   renderCharts();
 }
 function renderCharts(){
@@ -467,6 +473,15 @@ function renderCharts(){
   if(charts.tool)charts.tool.destroy();
   const tools=Object.entries(stats.toolUsageTotal||{}).sort((a,b)=>b[1]-a[1]).slice(0,8);
   charts.tool=new Chart(document.getElementById('toolChart'),{type:'bar',data:{labels:tools.map(t=>t[0]),datasets:[{data:tools.map(t=>t[1]),backgroundColor:'rgba(168,85,247,.4)',borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1e1e21'}},y:{grid:{display:false}}}}});
+  // Cost over time
+  if(charts.cost)charts.cost.destroy();
+  const costDays=Object.entries(stats.costByDay||{}).sort((a,b)=>a[0].localeCompare(b[0])).slice(-30);
+  charts.cost=new Chart(document.getElementById('costChart'),{type:'line',data:{labels:costDays.map(d=>d[0].slice(5)),datasets:[{label:'Cost ($)',data:costDays.map(d=>+d[1].toFixed(4)),borderColor:'rgba(245,158,11,.8)',backgroundColor:'rgba(245,158,11,.1)',borderWidth:2,fill:true,tension:.3,pointRadius:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#1e1e21'}}}}});
+  // Top files
+  if(charts.files)charts.files.destroy();
+  const topFiles=(stats.topFiles||[]).slice(0,8);
+  const fileLabels=topFiles.map(f=>{const p=f.file;return p.length>30?'…'+p.slice(-28):p});
+  charts.files=new Chart(document.getElementById('filesChart'),{type:'bar',data:{labels:fileLabels,datasets:[{data:topFiles.map(f=>f.count),backgroundColor:'rgba(6,182,212,.4)',borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{title:(items)=>topFiles[items[0].dataIndex]?.file||''}}},scales:{x:{grid:{color:'#1e1e21'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
 }
 
 // ── Tabs ──
