@@ -286,7 +286,14 @@ input:focus,textarea:focus{border-color:var(--accent)}
 
     <div id="trashView" style="display:none">
       <h2 style="font-size:1.1rem;margin-bottom:12px">Trash</h2>
+      <div id="trashActions" style="display:none;margin-bottom:12px;gap:8px;align-items:center">
+        <span><span id="trashSelCount">0</span> selected</span>
+        <button class="btn btn-sm" onclick="batchRestoreTrash()">Restore Selected</button>
+        <button class="btn btn-sm btn-danger" onclick="batchDeleteTrash()">Delete Selected</button>
+        <button class="btn btn-sm" onclick="clearTrashSelection()">Cancel</button>
+      </div>
       <table class="tbl"><thead><tr>
+        <th style="width:30px"><input type="checkbox" class="chk" id="trashSelectAll" onchange="toggleAllTrash(this.checked)"></th>
         <th>Trashed</th><th>Project</th><th>Title</th><th>Score</th><th>Size</th><th>Actions</th>
       </tr></thead><tbody id="trashBody"></tbody></table>
     </div>
@@ -681,18 +688,41 @@ async function trashOne(id){
 }
 
 // ── Trash View ──
+let trashSelectedIds=new Set(),trashItems=[];
 async function showTrash(){
   ['overview','listView','detail'].forEach(x=>document.getElementById(x).style.display='none');
   document.getElementById('trashView').style.display='';
-  const items=await api('/api/trash');
+  trashSelectedIds.clear();
+  updateTrashActionBar();
+  trashItems=await api('/api/trash');
+  renderTrashTable();
+}
+function renderTrashTable(){
   const body=document.getElementById('trashBody');
-  if(!items.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:24px">Trash is empty</td></tr>';return}
-  body.innerHTML=items.map(i=>`<tr>
+  if(!trashItems.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:24px">Trash is empty</td></tr>';return}
+  body.innerHTML=trashItems.map(i=>`<tr>
+    <td><input type="checkbox" class="chk" ${trashSelectedIds.has(i.id)?'checked':''} onchange="toggleTrashSelect('${i.id}',this.checked)"></td>
     <td>${i.trashedAt?.slice(0,10)||'—'}</td><td>${esc(i.project||'')}</td>
     <td>${esc((i.title||'').slice(0,45))}</td><td>${tierBadge(i.junkScore>=.6?1:i.junkScore>=.3?2:3)}</td>
     <td>${fmtBytes(i.fileSizeBytes||0)}</td>
     <td><button class="btn btn-sm" onclick="restoreOne('${i.id}')">Restore</button> <button class="btn btn-sm btn-danger" onclick="deleteOne('${i.id}')">Delete</button></td>
   </tr>`).join('');
+  document.getElementById('trashSelectAll').checked=trashSelectedIds.size===trashItems.length&&trashItems.length>0;
+}
+function toggleTrashSelect(id,checked){if(checked)trashSelectedIds.add(id);else trashSelectedIds.delete(id);updateTrashActionBar();renderTrashTable()}
+function toggleAllTrash(checked){trashItems.forEach(i=>{if(checked)trashSelectedIds.add(i.id);else trashSelectedIds.delete(i.id)});updateTrashActionBar();renderTrashTable()}
+function clearTrashSelection(){trashSelectedIds.clear();updateTrashActionBar();renderTrashTable()}
+function updateTrashActionBar(){const bar=document.getElementById('trashActions');if(trashSelectedIds.size>0){bar.style.display='flex';document.getElementById('trashSelCount').textContent=trashSelectedIds.size}else{bar.style.display='none'}}
+async function batchRestoreTrash(){
+  if(!confirm(`Restore ${trashSelectedIds.size} sessions?`))return;
+  for(const id of trashSelectedIds)await apiPost(`/api/restore/${id}`);
+  const d=await api('/api/sessions?limit=5000');allSessions=d.sessions||[];
+  trashSelectedIds.clear();trashItems=await api('/api/trash');renderTrashTable();updateTrashActionBar();toast(`Restored sessions`);
+}
+async function batchDeleteTrash(){
+  if(!confirm(`Permanently delete ${trashSelectedIds.size} sessions? This cannot be undone.`))return;
+  await apiPost('/api/batch/trash-delete',{ids:[...trashSelectedIds]});
+  trashSelectedIds.clear();trashItems=await api('/api/trash');renderTrashTable();updateTrashActionBar();toast('Sessions permanently deleted');
 }
 async function restoreOne(id){
   await apiPost(`/api/restore/${id}`);

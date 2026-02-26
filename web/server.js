@@ -363,6 +363,32 @@ async function handleRequest(req, res) {
       return;
     }
 
+    // ── Batch delete from trash ──────────────────────────────────
+    if (path === '/api/batch/trash-delete' && method === 'POST') {
+      const body = await readBody(req);
+      if (!body.ids || !Array.isArray(body.ids)) return send({ error: 'Missing ids' }, 400);
+      let deleted = 0;
+      for (const id of body.ids) {
+        try { await deleteFromTrash(id); deleted++; } catch { /* skip */ }
+      }
+      send({ deleted, total: body.ids.length });
+      return;
+    }
+
+    // ── Batch restore from trash ─────────────────────────────────
+    if (path === '/api/batch/restore' && method === 'POST') {
+      const body = await readBody(req);
+      if (!body.ids || !Array.isArray(body.ids)) return send({ error: 'Missing ids' }, 400);
+      let restored = 0;
+      for (const id of body.ids) {
+        try { await restoreSession(id); restored++; } catch { /* skip */ }
+      }
+      invalidateCache();
+      await clearCache();
+      send({ restored, total: body.ids.length });
+      return;
+    }
+
     // ── Restore from trash ───────────────────────────────────────
     const restoreMatch = path.match(/^\/api\/restore\/([a-f0-9-]+)$/);
     if (restoreMatch && method === 'POST') {
