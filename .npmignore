@@ -1,0 +1,23 @@
+# User data — NEVER publish
+cache.json
+metadata.json
+trash/
+trash-manifest.json
+
+# Development
+.git/
+.github/
+.gitignore
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Tests
+*.test.js
+*.spec.js
+test/
+
+# Docs (README included via package.json files)
+CONTRIBUTING.md
+SECURITY.md

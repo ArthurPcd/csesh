@@ -1,0 +1,6 @@
+{
+  "webPort": 3456,
+  "scanMode": "fast",
+  "defaultSort": "date",
+  "pageSize": 50
+}

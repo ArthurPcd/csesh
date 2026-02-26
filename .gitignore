@@ -1,0 +1,22 @@
+# User data (generated at runtime)
+cache.json
+metadata.json
+trash/
+trash-manifest.json
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
