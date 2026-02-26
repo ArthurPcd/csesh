@@ -82,6 +82,7 @@ csesh web --port 8080
 ```bash
 csesh trash list
 csesh trash restore <id>
+csesh trash delete <id>
 csesh trash empty
 ```
 
@@ -125,6 +126,6 @@ csesh web                     # visual dashboard with charts
 ## Installation
 
 ```bash
-npx csesh --help              # run directly
-npm install -g csesh          # or install globally
+npx @arthurpcd/csesh --help              # run directly
+npm install -g @arthurpcd/csesh          # or install globally
 ```

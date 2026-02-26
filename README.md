@@ -1,7 +1,7 @@
 # csesh
 
 [![CI](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml/badge.svg)](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/csesh.svg)](https://www.npmjs.com/package/csesh)
+[![npm version](https://img.shields.io/npm/v/@arthurpcd/csesh.svg)](https://www.npmjs.com/package/@arthurpcd/csesh)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 
@@ -20,6 +20,7 @@ Navigate, search, analyze, and clean up your Claude Code sessions -- from the co
 - **Full-text search** across all sessions with project and date filtering
 - **Export** as JSON, CSV, or Markdown
 - **Cost estimation** per session and across all sessions, with per-model token pricing
+- **Streamer mode** — one-click toggle to blur project paths, session IDs, file paths, and CWD for screen recordings
 
 ---
 
@@ -27,10 +28,10 @@ Navigate, search, analyze, and clean up your Claude Code sessions -- from the co
 
 ```bash
 # Run directly with npx
-npx csesh web
+npx @arthurpcd/csesh web
 
 # Or install globally
-npm install -g csesh
+npm install -g @arthurpcd/csesh
 csesh web
 ```
 
@@ -149,6 +150,7 @@ csesh web --port 8080         # custom port
 ```bash
 csesh trash list              # list all trashed sessions
 csesh trash restore <id>      # restore a session from trash
+csesh trash delete <id>       # permanently delete a single session from trash
 csesh trash empty             # permanently delete items older than 30 days
 csesh trash empty --older-than 7   # custom threshold in days
 ```
