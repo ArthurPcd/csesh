@@ -31,10 +31,15 @@ input,textarea,select{font-family:var(--font);background:var(--bg-2);color:var(-
 input:focus,textarea:focus{border-color:var(--accent)}
 
 /* Sidebar */
-#sidebar{width:272px;min-width:272px;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.sb-header{padding:16px;border-bottom:1px solid var(--border)}
+#sidebar{width:272px;min-width:272px;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s,min-width .2s}
+#sidebar.collapsed{width:48px;min-width:48px}
+#sidebar.collapsed .sb-section,#sidebar.collapsed .sb-search,#sidebar.collapsed .sb-tiers,#sidebar.collapsed .sb-footer span:first-child{display:none}
+#sidebar.collapsed .sb-header h1 .sb-name{display:none}
+.sb-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .sb-header h1{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px}
 .sb-header h1 span{color:var(--accent)}
+.sb-toggle{background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px 4px;font-size:.8rem;transition:color .15s;flex-shrink:0}
+.sb-toggle:hover{color:var(--text-1)}
 .sb-search{padding:8px 12px}
 .sb-search input{width:100%;padding:7px 10px 7px 30px;background:var(--bg-2);font-size:.8rem;border-radius:var(--radius)}
 .sb-search-wrap{position:relative}
@@ -207,8 +212,9 @@ input:focus,textarea:focus{border-color:var(--accent)}
 </head>
 <body>
 <nav id="sidebar">
-  <div class="sb-header" onclick="this.parentElement.classList.toggle('open')">
-    <h1><span>⬡</span> csesh</h1>
+  <div class="sb-header" onclick="if(window.innerWidth<=768)this.parentElement.classList.toggle('open')">
+    <h1><span>⬡</span><span class="sb-name"> csesh</span></h1>
+    <button class="sb-toggle" id="sbToggle" onclick="event.stopPropagation();toggleSidebar()" title="Collapse sidebar">◀</button>
   </div>
   <div class="sb-search">
     <div class="sb-search-wrap">
@@ -411,9 +417,9 @@ function renderProjects(projects){
     projects.map(p=>'<li class="sb-item" onclick="selectProject(\''+p.slug+'\')" data-slug="'+p.slug+'"><span class="sensitive">'+esc(p.shortName)+'</span><span class="sb-badge">'+p.sessions+'</span></li>').join('');
 }
 function selectProject(slug){
-  currentProject=slug;currentPage=0;
+  currentProject=slug;currentPage=0;currentTab='all';
   document.querySelectorAll('#projectList .sb-item').forEach(li=>li.classList.toggle('active',li.dataset.slug===(slug||'')));
-  if(document.getElementById('overview').style.display!=='none'){showList()}else{renderTable()}
+  showList();
 }
 function updateSidebar(){
   if(!stats)return;
@@ -546,9 +552,13 @@ function batchTag(){
 }
 
 // ── Detail ──
-let currentDetailId=null,msgOffset=0;
+let currentDetailId=null,msgOffset=0,previousView='listView';
 async function showDetail(id){
   currentDetailId=id;msgOffset=0;
+  // Track which view we came from
+  if(document.getElementById('trashView').style.display!=='none')previousView='trashView';
+  else if(document.getElementById('overview').style.display!=='none')previousView='overview';
+  else previousView='listView';
   ['overview','listView','trashView'].forEach(x=>document.getElementById(x).style.display='none');
   document.getElementById('detail').style.display='block';
   document.getElementById('detailInner').innerHTML='<div style="text-align:center;padding:40px;color:var(--text-3)">Loading session...</div>';
@@ -624,7 +634,8 @@ function renderMarkdown(text){
 }
 function goBack(){
   document.getElementById('detail').style.display='none';
-  if(currentTab==='trash'){document.getElementById('trashView').style.display=''}
+  if(previousView==='trashView'){document.getElementById('trashView').style.display=''}
+  else if(previousView==='overview'){document.getElementById('overview').style.display=''}
   else{document.getElementById('listView').style.display=''}
 }
 
@@ -767,6 +778,18 @@ function highlightRow(){
   document.querySelectorAll('#tableBody tr').forEach((tr,i)=>{tr.classList.toggle('focused',i===localIdx)});
   const row=document.querySelector(`#tableBody tr:nth-child(${localIdx+1})`);
   if(row)row.scrollIntoView({block:'nearest'});
+}
+
+// ── Sidebar collapse ──
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const collapsed=sb.classList.toggle('collapsed');
+  document.getElementById('sbToggle').textContent=collapsed?'▶':'◀';
+  localStorage.setItem('csesh-sidebar',collapsed?'1':'');
+}
+if(localStorage.getItem('csesh-sidebar')){
+  document.getElementById('sidebar').classList.add('collapsed');
+  document.getElementById('sbToggle').textContent='▶';
 }
 
 // ── Streamer mode ──
