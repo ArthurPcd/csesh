@@ -23,7 +23,7 @@ import { stat as fsStat, access, readdir } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 
-const VERSION = '1.1.0';
+const VERSION = '2.0.0';
 const BRAND = '\u2B21'; // ⬡
 const INIT_MARKER = join(TOOL_DIR, '.csesh-init');
 
