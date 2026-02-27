@@ -45,7 +45,7 @@ input,textarea,select{font-family:var(--font);background:var(--bg-2);color:var(-
 input:focus,textarea:focus{border-color:var(--accent)}
 
 /* Sidebar */
-#sidebar{width:272px;min-width:272px;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s,min-width .2s}
+#sidebar{width:272px;min-width:272px;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s,min-width .2s;height:100vh;position:sticky;top:0}
 #sidebar.collapsed{width:48px;min-width:48px}
 #sidebar.collapsed .sb-section,#sidebar.collapsed .sb-search,#sidebar.collapsed .sb-tiers,#sidebar.collapsed .sb-footer span:first-child{display:none}
 #sidebar.collapsed .sb-header h1 .sb-name{display:none}
@@ -55,21 +55,25 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .sb-toggle{background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px 4px;font-size:.8rem;transition:color .15s;flex-shrink:0}
 .sb-toggle:hover{color:var(--text-1)}
 .sb-search{padding:8px 12px}
-.sb-search input{width:100%;padding:7px 10px 7px 30px;background:var(--bg-2);font-size:.8rem;border-radius:var(--radius)}
+.sb-search input{width:100%;padding:7px 10px 7px 38px;background:var(--bg-2);font-size:.8rem;border-radius:var(--radius)}
 .sb-search-wrap{position:relative}
-.sb-search-wrap::before{content:'/';position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.75rem;font-family:var(--mono);background:var(--bg-3);border-radius:3px;padding:0 4px;line-height:1.4}
-.sb-section{padding:4px 8px}
+.sb-search-wrap::before{content:'⌘↵';position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.65rem;font-family:var(--mono);background:var(--bg-3);border-radius:3px;padding:0 4px;line-height:1.4}
+.sb-section{padding:4px 8px;flex:1;min-height:0;overflow-y:auto}
 .sb-section-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);padding:8px 8px 4px;font-weight:600}
-.sb-list{list-style:none;max-height:280px;overflow-y:auto}
+.sb-list{list-style:none}
 .sb-item{padding:5px 10px;border-radius:var(--radius);cursor:pointer;font-size:.8rem;display:flex;justify-content:space-between;align-items:center;color:var(--text-2);transition:background .1s}
 .sb-item:hover{background:var(--bg-3);color:var(--text-1)}
 .sb-item.active{background:var(--accent-bg);color:var(--accent)}
 .sb-badge{font-size:.7rem;background:var(--bg-3);border-radius:10px;padding:1px 7px;color:var(--text-3);font-weight:500}
 .sb-item.active .sb-badge{background:rgba(59,130,246,.15);color:var(--accent)}
-.sb-tiers{padding:12px 16px;border-top:1px solid var(--border);margin-top:auto}
+.sb-tiers{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
 .tier-row{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-2);padding:2px 0}
 .tier-row .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
-.sb-footer{padding:10px 16px;border-top:1px solid var(--border);font-size:.7rem;color:var(--text-3);display:flex;align-items:center;justify-content:space-between}
+.sb-footer{padding:8px 16px;border-top:1px solid var(--border);font-size:.7rem;color:var(--text-3);flex-shrink:0}
+.sb-footer-row{display:flex;align-items:center;justify-content:space-between}
+.sb-footer-actions{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px}
+.sb-footer-actions button,.sb-footer-actions a,.sb-footer-actions span{background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px;display:flex;align-items:center;transition:color .15s;font-size:.8rem;line-height:1}
+.sb-footer-actions button:hover,.sb-footer-actions a:hover,.sb-footer-actions span:hover{color:var(--accent)}
 .sb-footer .info-btn{background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px;display:flex;align-items:center;transition:color .15s}
 .sb-footer .info-btn:hover{color:var(--accent)}
 #infoModal{position:fixed;inset:0;background:var(--shadow-modal);z-index:300;display:none;align-items:center;justify-content:center}
@@ -261,7 +265,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
   </div>
   <div class="sb-search">
     <div class="sb-search-wrap">
-      <input type="text" id="globalSearch" placeholder="Search..." onkeydown="if(event.key==='Enter')doGlobalSearch()">
+      <input type="text" id="globalSearch" placeholder="Search..." onkeydown="if(event.key==='Enter')doGlobalSearch();" onfocus="this.select()">
     </div>
   </div>
   <div class="sb-section">
@@ -316,20 +320,23 @@ input:focus,textarea:focus{border-color:var(--accent)}
       </div>
     </div>
 
-    <div id="listView" style="display:none">
+    <div id="browseNav" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
         <div class="tab-bar" id="tabs"></div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="sortSelect" onchange="currentSort=this.value;currentPage=0;renderTable()" style="font-size:.8rem">
+        <div id="listControls" style="display:flex;gap:8px;align-items:center">
+          <select id="sortSelect" onchange="currentSort=this.value;currentPage=0;renderActive()" style="font-size:.8rem">
             <option value="date">Sort: Date</option>
             <option value="size">Sort: Size</option>
             <option value="messages">Sort: Messages</option>
             <option value="tier">Sort: Tier</option>
             <option value="project">Sort: Project</option>
           </select>
-          <input type="text" id="filterInput" placeholder="Filter..." oninput="currentPage=0;renderTable()" style="width:180px;font-size:.8rem">
+          <input type="text" id="filterInput" placeholder="Filter..." oninput="currentPage=0;renderActive()" style="width:180px;font-size:.8rem">
         </div>
       </div>
+    </div>
+
+    <div id="listView" style="display:none">
       <table class="tbl">
         <thead><tr>
           <th style="width:30px"><input type="checkbox" class="chk" onchange="toggleAll(this.checked)"></th>
@@ -357,7 +364,6 @@ input:focus,textarea:focus{border-color:var(--accent)}
     </div>
 
     <div id="trashView" style="display:none">
-      <h2 style="font-size:1.1rem;margin-bottom:12px">Trash</h2>
       <div id="trashActions" style="display:none;margin-bottom:12px;gap:8px;align-items:center">
         <span><span id="trashSelCount">0</span> selected</span>
         <button class="btn btn-sm" onclick="batchRestoreTrash()">Restore Selected</button>
@@ -384,13 +390,15 @@ input:focus,textarea:focus{border-color:var(--accent)}
 <div id="kbHelp" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Keyboard Shortcuts</h3>
-    <div class="kb-row"><span>Go to dashboard</span><span class="kb-key">g</span></div>
-    <div class="kb-row"><span>Search</span><span class="kb-key">/</span></div>
-    <div class="kb-row"><span>Navigate up/down</span><span><span class="kb-key">j</span> <span class="kb-key">k</span></span></div>
+    <div class="kb-row"><span>Filter sessions</span><span><span class="kb-key">⌘</span> <span class="kb-key">K</span></span></div>
+    <div class="kb-row"><span>Global search</span><span><span class="kb-key">⌘</span> <span class="kb-key">Enter</span></span></div>
+    <div class="kb-row"><span>Go to dashboard</span><span class="kb-key">G</span></div>
+    <div class="kb-row"><span>Navigate up/down</span><span><span class="kb-key">J</span> <span class="kb-key">K</span></span></div>
     <div class="kb-row"><span>Open session</span><span class="kb-key">Enter</span></div>
-    <div class="kb-row"><span>Go back</span><span class="kb-key">Esc</span></div>
-    <div class="kb-row"><span>Toggle favorite</span><span class="kb-key">f</span></div>
-    <div class="kb-row"><span>Trash selected</span><span class="kb-key">t</span></div>
+    <div class="kb-row"><span>Go back / Close</span><span class="kb-key">Esc</span></div>
+    <div class="kb-row"><span>Toggle favorite</span><span class="kb-key">F</span></div>
+    <div class="kb-row"><span>Trash selected</span><span class="kb-key">T</span></div>
+    <div class="kb-row"><span>Change sort</span><span class="kb-key">S</span></div>
     <div class="kb-row"><span>Show help</span><span class="kb-key">?</span></div>
     <div style="margin-top:12px;text-align:right"><button class="btn btn-sm" onclick="document.getElementById('kbHelp').style.display='none'">Close</button></div>
   </div>
@@ -491,7 +499,18 @@ function updateSidebar(){
     '<div class="sb-section-title">Classification</div>'+
     [4,3,2,1].map(t=>'<div class="tier-row"><span><span class="dot" style="background:var(--'+(t===4?'green':t===3?'blue':t===2?'yellow':'red')+')"></span>'+tierNames[t]+'</span><span>'+(td[t]||0)+'</span></div>').join('');
   const isStreamer=document.body.classList.contains('streamer-mode');
-  document.getElementById('sidebarFooter').innerHTML='<span>'+allSessions.length+' sessions &middot; '+fmtBytes(stats.totalSize)+'</span><span style="display:flex;gap:6px;align-items:center"><span style="font-size:.65rem;color:var(--text-3)">v2.0.0</span><button class="theme-btn" id="themeToggleBtn" onclick="cycleTheme()" title="Toggle theme">&#9681;</button><button class="info-btn" onclick="toggleStreamer()" title="Streamer mode">'+(isStreamer?'👁‍🗨':'👁')+'</button><a href="https://github.com/ArthurPcd/csesh" target="_blank" rel="noopener" title="GitHub" style="display:flex;color:var(--text-3);transition:color .15s" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-3)\'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></a><span style="cursor:pointer;color:var(--text-3)" onclick="document.getElementById(\'kbHelp\').style.display=\'flex\'" title="Keyboard shortcuts">?</span><button class="info-btn" onclick="document.getElementById(\'infoModal\').style.display=\'flex\'" title="About"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></span>';
+  document.getElementById('sidebarFooter').innerHTML=`
+    <div class="sb-footer-row">
+      <span>${allSessions.length} sessions &middot; ${fmtBytes(stats.totalSize)}</span>
+      <span style="font-size:.6rem">v2.0.0</span>
+    </div>
+    <div class="sb-footer-actions">
+      <button id="themeToggleBtn" onclick="cycleTheme()" title="Toggle theme">&#9681;</button>
+      <button onclick="toggleStreamer()" title="Streamer mode">${isStreamer?'&#128065;&#8205;&#128488;':'&#128065;'}</button>
+      <a href="https://github.com/ArthurPcd/csesh" target="_blank" rel="noopener" title="GitHub"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></a>
+      <span onclick="document.getElementById('kbHelp').style.display='flex'" title="Keyboard shortcuts (⌘K)">?</span>
+      <button onclick="document.getElementById('infoModal').style.display='flex'" title="About csesh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+    </div>`;
   updateThemeButton();
 }
 
@@ -510,8 +529,8 @@ function renderOverview(){
     <div class="card"><div class="card-label">Auto-delete</div><div class="card-value red">${td[1]||0}</div></div>
     <div class="card"><div class="card-label">Messages</div><div class="card-value">${(stats.totalUserMessages+stats.totalAssistantMessages).toLocaleString()}</div></div>
     <div class="card"><div class="card-label">Est. Cost ${costArrow}</div><div class="card-value">$${stats.totalCost.toFixed(2)}</div></div>
-    <div class="card"><div class="card-label">Already Saved</div><div class="card-value green">${savedSize>0?fmtBytes(savedSize):'—'}</div><div style="font-size:.65rem;color:var(--text-3)">${stats.trashedCount||0} sessions trashed</div></div>
-    <div class="card"><div class="card-label">Can Save</div><div class="card-value yellow">${fmtBytes(canSave)}</div><div style="font-size:.65rem;color:var(--text-3)">${(td[1]||0)+(td[2]||0)} deletable sessions</div></div>
+    <div class="card" style="border-color:var(--green);border-left:3px solid var(--green)"><div class="card-label">Disk Freed by csesh</div><div class="card-value green">${savedSize>0?fmtBytes(savedSize):'—'}</div><div style="font-size:.65rem;color:var(--text-3)">${stats.trashedCount||0} sessions cleaned</div></div>
+    <div class="card" style="border-left:3px solid var(--yellow)"><div class="card-label">Reclaimable</div><div class="card-value yellow">${fmtBytes(canSave)}</div><div style="font-size:.65rem;color:var(--text-3)">${(td[1]||0)+(td[2]||0)} deletable &middot; ${((canSave/(stats.totalSize||1))*100).toFixed(0)}% of total</div></div>
     <div class="card"><div class="card-label">Avg Cost/Session</div><div class="card-value">$${(stats.avgCostPerSession||0).toFixed(3)}</div></div>
     <div class="card"><div class="card-label">Avg Messages</div><div class="card-value">${stats.avgMessagesPerSession||0}</div></div>`;
   renderCharts();
@@ -563,19 +582,31 @@ function renderCharts(){
 
 // ── Tabs ──
 function renderTabs(){
-  const tabs=[{id:'all',label:'All'},{id:'keep',label:'Keep'},{id:'review',label:'Review'},{id:'suggested',label:'Suggested'},{id:'auto-delete',label:'Auto-delete'},{id:'favorites',label:'★'},{id:'trash',label:'Trash'}];
-  document.getElementById('tabs').innerHTML=tabs.map(t=>`<button class="tab${currentTab===t.id?' active':''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('');
+  const tabs=[{id:'all',label:'All'},{id:'keep',label:'Keep'},{id:'review',label:'Review'},{id:'suggested',label:'Suggested'},{id:'auto-delete',label:'Auto-delete'},{id:'trash',label:'Trash'},{id:'favorites',label:'★'}];
+  document.getElementById('tabs').innerHTML=
+    `<button class="tab" onclick="showOverview()" title="Dashboard" style="color:var(--text-3);font-size:.75rem">&#9666;</button>`+
+    tabs.map(t=>`<button class="tab${currentTab===t.id?' active':''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('');
 }
-function setTab(id){currentTab=id;currentPage=0;focusIdx=-1;renderTabs();if(id==='trash'){showTrash()}else{renderTable()}}
+function setTab(id){currentTab=id;currentPage=0;focusIdx=-1;renderTabs();if(id==='trash'){showTrash()}else{showListFromTab()}}
+function renderActive(){if(currentTab==='trash')renderTrashTable();else renderTable()}
 
 // ── List View ──
 function showList(){
   ['overview','detail','trashView'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('browseNav').style.display='';
+  document.getElementById('listControls').style.display='flex';
   document.getElementById('listView').style.display='';
   currentPage=0;focusIdx=-1;renderTabs();renderTable();
 }
+function showListFromTab(){
+  // Called from tab click — keep browseNav visible, just swap content
+  document.getElementById('trashView').style.display='none';
+  document.getElementById('listControls').style.display='flex';
+  document.getElementById('listView').style.display='';
+  currentPage=0;focusIdx=-1;renderTable();
+}
 function showOverview(){
-  ['listView','detail','trashView'].forEach(id=>document.getElementById(id).style.display='none');
+  ['browseNav','listView','detail','trashView'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('overview').style.display='';
 }
 function getFiltered(){
@@ -651,7 +682,7 @@ async function showDetail(id){
   if(document.getElementById('trashView').style.display!=='none')previousView='trashView';
   else if(document.getElementById('overview').style.display!=='none')previousView='overview';
   else previousView='listView';
-  ['overview','listView','trashView'].forEach(x=>document.getElementById(x).style.display='none');
+  ['overview','browseNav','listView','trashView'].forEach(x=>document.getElementById(x).style.display='none');
   document.getElementById('detail').style.display='block';
   document.getElementById('detailInner').innerHTML='<div style="text-align:center;padding:40px;color:var(--text-3)">Loading session...</div>';
   document.getElementById('msgList').innerHTML='';
@@ -799,23 +830,38 @@ async function trashOne(id){
 let trashSelectedIds=new Set(),trashItems=[];
 async function showTrash(){
   ['overview','listView','detail'].forEach(x=>document.getElementById(x).style.display='none');
+  document.getElementById('browseNav').style.display='';
+  document.getElementById('listControls').style.display='flex';
   document.getElementById('trashView').style.display='';
   trashSelectedIds.clear();
   updateTrashActionBar();
   trashItems=await api('/api/trash');
   renderTrashTable();
 }
+function getFilteredTrash(){
+  let items=[...trashItems];
+  const q=document.getElementById('filterInput')?.value?.toLowerCase();
+  if(q)items=items.filter(i=>(i.title||'').toLowerCase().includes(q)||(i.project||'').toLowerCase().includes(q)||(i.id||'').toLowerCase().includes(q));
+  switch(currentSort){
+    case'size':items.sort((a,b)=>(b.fileSizeBytes||0)-(a.fileSizeBytes||0));break;
+    case'project':items.sort((a,b)=>(a.project||'').localeCompare(b.project||''));break;
+    case'title':items.sort((a,b)=>(a.title||'').localeCompare(b.title||''));break;
+    default:items.sort((a,b)=>{const da=a.trashedAt||'';const db=b.trashedAt||'';return db.localeCompare(da)})
+  }
+  return items;
+}
 function renderTrashTable(){
   const body=document.getElementById('trashBody');
-  if(!trashItems.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:24px">Trash is empty</td></tr>';return}
-  body.innerHTML=trashItems.map(i=>`<tr>
+  const filtered=getFilteredTrash();
+  if(!filtered.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:24px">'+(trashItems.length?'No matches':'Trash is empty')+'</td></tr>';return}
+  body.innerHTML=filtered.map(i=>`<tr>
     <td><input type="checkbox" class="chk" ${trashSelectedIds.has(i.id)?'checked':''} onchange="toggleTrashSelect('${i.id}',this.checked)"></td>
     <td>${i.trashedAt?.slice(0,10)||'—'}</td><td>${esc(i.project||'')}</td>
     <td>${esc((i.title||'').slice(0,45))}</td><td>${tierBadge(i.junkScore>=.6?1:i.junkScore>=.3?2:3)}</td>
     <td>${fmtBytes(i.fileSizeBytes||0)}</td>
     <td><button class="btn btn-sm" onclick="restoreOne('${i.id}')">Restore</button> <button class="btn btn-sm btn-danger" onclick="deleteOne('${i.id}')">Delete</button></td>
   </tr>`).join('');
-  document.getElementById('trashSelectAll').checked=trashSelectedIds.size===trashItems.length&&trashItems.length>0;
+  document.getElementById('trashSelectAll').checked=trashSelectedIds.size===filtered.length&&filtered.length>0;
 }
 function toggleTrashSelect(id,checked){if(checked)trashSelectedIds.add(id);else trashSelectedIds.delete(id);updateTrashActionBar();renderTrashTable()}
 function toggleAllTrash(checked){trashItems.forEach(i=>{if(checked)trashSelectedIds.add(i.id);else trashSelectedIds.delete(i.id)});updateTrashActionBar();renderTrashTable()}
@@ -854,17 +900,29 @@ function doGlobalSearch(){
 
 // ── Keyboard shortcuts ──
 document.addEventListener('keydown',e=>{
+  // Cmd+K / Ctrl+K — focus filter (works from anywhere, including inputs)
+  if((e.key==='k'||e.key==='K')&&(e.metaKey||e.ctrlKey)){e.preventDefault();e.stopPropagation();const lv=document.getElementById('listView');if(!lv||lv.style.display==='none'){showList()}setTimeout(()=>{const inp=document.getElementById('filterInput');if(inp){inp.focus();inp.select()}},60);return}
+  // Cmd+Enter / Ctrl+Enter — trigger sidebar search (works from anywhere)
+  if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();e.stopPropagation();const gs=document.getElementById('globalSearch');if(gs){gs.focus();if(gs.value)doGlobalSearch()}else{showList()}return}
+  // Escape — close modals or go back (works from inputs too)
+  if(e.key==='Escape'){
+    document.getElementById('kbHelp').style.display='none';
+    document.getElementById('infoModal').style.display='none';
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){e.target.blur();return}
+    if(document.getElementById('detail').style.display!=='none')goBack();
+    return;
+  }
+  // Skip remaining shortcuts if typing in a form field
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
   const listVisible=document.getElementById('listView').style.display!=='none';
-  if(e.key==='g'){e.preventDefault();showOverview()}
-  else if(e.key==='/'){e.preventDefault();document.getElementById('filterInput')?.focus();showList()}
+  if(e.key==='g'&&!e.metaKey&&!e.ctrlKey){e.preventDefault();showOverview()}
   else if(e.key==='?'){e.preventDefault();document.getElementById('kbHelp').style.display='flex'}
-  else if(e.key==='Escape'){document.getElementById('kbHelp').style.display='none';if(document.getElementById('detail').style.display!=='none')goBack()}
   else if(e.key==='j'&&listVisible){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.min(focusIdx+1,getFiltered().length-1);highlightRow()}
-  else if(e.key==='k'&&listVisible){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.max(focusIdx-1,0);highlightRow()}
+  else if(e.key==='k'&&listVisible&&!e.metaKey&&!e.ctrlKey){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.max(focusIdx-1,0);highlightRow()}
   else if(e.key==='Enter'&&listVisible&&focusIdx>=0){const f=getFiltered();if(f[focusIdx])showDetail(f[focusIdx].id)}
   else if(e.key==='f'&&listVisible&&focusIdx>=0){const f=getFiltered();if(f[focusIdx]){const sid=f[focusIdx].id;apiPost(`/api/sessions/${sid}/favorite`).then(r=>{const s=allSessions.find(x=>x.id===sid);if(s)s.favorite=r.favorite;renderTable();toast(r.favorite?'Added to favorites':'Removed from favorites')})}}
   else if(e.key==='t'&&listVisible){if(selectedIds.size>0)batchTrash()}
+  else if(e.key==='s'&&listVisible){e.preventDefault();document.getElementById('sortSelect')?.focus()}
 });
 function highlightRow(){
   const localIdx=focusIdx-currentPage*PAGE;
