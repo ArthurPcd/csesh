@@ -19,6 +19,8 @@ import { mergeMetadata, setTitle, addTag, removeTag, toggleFavorite, setNote, se
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const MIN_ID_LENGTH = 8;
+
 let sessionsCache = null;
 let lastLoadTime = 0;
 const CACHE_TTL = 30_000;
@@ -40,7 +42,10 @@ async function getSessions(forceRefresh = false) {
         const summary = await fastScan(f);
         await setCached(f.filePath, summary);
         return summary;
-      } catch { return null; }
+      } catch (err) {
+        console.error(`csesh: scan error for ${f.filePath}: ${err.message}`);
+        return null;
+      }
     }));
     results.push(...batchResults.filter(Boolean));
   }
@@ -202,7 +207,7 @@ async function handleRequest(req, res) {
             send(deep);
             return;
           }
-        } catch { /* fall through to basic data */ }
+        } catch (err) { console.error(`csesh: deep analysis error: ${err.message}`); }
       }
       send(session);
       return;
@@ -349,6 +354,9 @@ async function handleRequest(req, res) {
     const trashMatch = path.match(/^\/api\/trash\/([a-f0-9-]+)$/);
     if (trashMatch && method === 'POST') {
       const id = trashMatch[1];
+      if (id.length < MIN_ID_LENGTH) {
+        return send({ error: `ID too short for destructive operation (minimum ${MIN_ID_LENGTH} characters)` }, 400);
+      }
       const sessions = await getSessions();
       const session = sessions.find(s => s.id === id || s.id.startsWith(id));
       if (!session) return send({ error: 'Not found' }, 404);
@@ -367,18 +375,22 @@ async function handleRequest(req, res) {
       }
       const sessions = await getSessions();
       let trashed = 0;
+      let errors = 0;
       for (const id of body.ids) {
         const session = sessions.find(s => s.id === id);
         if (session) {
           try {
             await trashSession(session, 'batch');
             trashed++;
-          } catch { /* skip */ }
+          } catch (err) {
+            console.error(`csesh: batch trash error for ${id}: ${err.message}`);
+            errors++;
+          }
         }
       }
       invalidateCache();
       await clearCache();
-      send({ trashed, total: body.ids.length });
+      send({ trashed, errors, total: body.ids.length });
       return;
     }
 
@@ -399,10 +411,14 @@ async function handleRequest(req, res) {
       const body = await readBody(req);
       if (!body.ids || !Array.isArray(body.ids)) return send({ error: 'Missing ids' }, 400);
       let deleted = 0;
+      let errors = 0;
       for (const id of body.ids) {
-        try { await deleteFromTrash(id); deleted++; } catch { /* skip */ }
+        try { await deleteFromTrash(id); deleted++; } catch (err) {
+          console.error(`csesh: batch delete error for ${id}: ${err.message}`);
+          errors++;
+        }
       }
-      send({ deleted, total: body.ids.length });
+      send({ deleted, errors, total: body.ids.length });
       return;
     }
 
@@ -411,12 +427,16 @@ async function handleRequest(req, res) {
       const body = await readBody(req);
       if (!body.ids || !Array.isArray(body.ids)) return send({ error: 'Missing ids' }, 400);
       let restored = 0;
+      let errors = 0;
       for (const id of body.ids) {
-        try { await restoreSession(id); restored++; } catch { /* skip */ }
+        try { await restoreSession(id); restored++; } catch (err) {
+          console.error(`csesh: batch restore error for ${id}: ${err.message}`);
+          errors++;
+        }
       }
       invalidateCache();
       await clearCache();
-      send({ restored, total: body.ids.length });
+      send({ restored, errors, total: body.ids.length });
       return;
     }
 
@@ -442,6 +462,9 @@ async function handleRequest(req, res) {
     const deleteTrashMatch = path.match(/^\/api\/trash\/([a-f0-9-]+)$/);
     if (deleteTrashMatch && method === 'DELETE') {
       const id = deleteTrashMatch[1];
+      if (id.length < MIN_ID_LENGTH) {
+        return send({ error: `ID too short for destructive operation (minimum ${MIN_ID_LENGTH} characters)` }, 400);
+      }
       const result = await deleteFromTrash(id);
       send(result);
       return;

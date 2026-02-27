@@ -88,7 +88,10 @@ async function loadSessions({ project = null, mode = 'fast', showProgress = true
         await setCached(f.filePath, summary);
         scanned++;
         return summary;
-      } catch { return null; }
+      } catch (err) {
+        console.error(`csesh: scan error: ${err.message}`);
+        return null;
+      }
     }));
     results.push(...batchResults.filter(Boolean));
     if (showProgress && i + 50 < files.length) {
@@ -484,10 +487,11 @@ program
 
       if (ans1.toLowerCase() === 'y') {
         let trashed = 0;
+        let skipped = 0;
         for (const s of tier1) {
-          try { await trashSession(s, 'cleanup-tier1'); trashed++; } catch {}
+          try { await trashSession(s, 'cleanup-tier1'); trashed++; } catch { skipped++; }
         }
-        console.log(chalk.green(`  \u2713 Trashed ${trashed} Tier 1 sessions`));
+        console.log(chalk.green(`  \u2713 Trashed ${trashed} Tier 1 sessions`) + (skipped > 0 ? chalk.yellow(` (${skipped} skipped due to errors)`) : ''));
       }
     }
 
@@ -501,10 +505,11 @@ program
 
       if (ans2.toLowerCase() === 'y') {
         let trashed = 0;
+        let skipped = 0;
         for (const s of tier2) {
-          try { await trashSession(s, 'cleanup-tier2'); trashed++; } catch {}
+          try { await trashSession(s, 'cleanup-tier2'); trashed++; } catch { skipped++; }
         }
-        console.log(chalk.green(`  \u2713 Trashed ${trashed} Tier 2 sessions`));
+        console.log(chalk.green(`  \u2713 Trashed ${trashed} Tier 2 sessions`) + (skipped > 0 ? chalk.yellow(` (${skipped} skipped due to errors)`) : ''));
       }
     }
 
@@ -553,6 +558,39 @@ program
   .option('-o, --output <file>', 'Output file (stdout if omitted)')
   .option('--session <id>', 'Export single session conversation as markdown')
   .action(async (opts) => {
+    // Validate output path if specified
+    if (opts.output) {
+      const { stat: fsStat } = await import('fs/promises');
+      const { dirname: pathDirname, resolve: pathResolve } = await import('path');
+
+      const outputPath = pathResolve(opts.output);
+
+      // Check for suspicious characters
+      if (/[<>|"'\x00-\x1f]/.test(opts.output)) {
+        console.log(chalk.red(`  \u2717 Output path contains invalid characters: ${opts.output}`));
+        process.exit(1);
+      }
+
+      // Check output directory exists
+      const outputDir = pathDirname(outputPath);
+      try {
+        const dirInfo = await fsStat(outputDir);
+        if (!dirInfo.isDirectory()) {
+          console.log(chalk.red(`  \u2717 Output directory is not a directory: ${outputDir}`));
+          process.exit(1);
+        }
+      } catch {
+        console.log(chalk.red(`  \u2717 Output directory does not exist: ${outputDir}`));
+        process.exit(1);
+      }
+
+      // Warn if file already exists
+      try {
+        await fsStat(outputPath);
+        console.log(chalk.yellow(`  Warning: ${outputPath} already exists and will be overwritten`));
+      } catch { /* file does not exist, good */ }
+    }
+
     if (opts.session) {
       // Export single session as markdown
       const sessions = await loadSessions({ showProgress: false });
