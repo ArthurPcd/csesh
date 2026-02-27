@@ -23,11 +23,8 @@ jobs:
 
       - run: npm ci
 
-      - name: Syntax check all JS files
-        run: |
-          for f in bin/csesh.js lib/*.js web/server.js; do
-            node --check "$f"
-          done
+      - name: Run tests
+        run: npm test
 
       - name: Smoke test CLI
         run: node bin/csesh.js --help
