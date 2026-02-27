@@ -22,8 +22,9 @@ import { getConfig } from '../lib/config.js';
 import { stat as fsStat, access, readdir } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
+import { createRequire } from 'module';
 
-const VERSION = '2.0.1';
+const VERSION = createRequire(import.meta.url)('../package.json').version;
 const BRAND = '\u2B21'; // ⬡
 const INIT_MARKER = join(TOOL_DIR, '.csesh-init');
 

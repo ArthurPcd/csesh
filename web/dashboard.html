@@ -408,7 +408,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 <div id="infoModal" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>csesh</h3>
-    <div class="subtitle">v2.0.1 — Claude Code session manager</div>
+    <div class="subtitle" id="infoVersion">Claude Code session manager</div>
     <div class="info-author">Arthur Pacaud</div>
     <div class="info-handle">@arthurpcd</div>
     <div class="info-links">
@@ -479,6 +479,7 @@ async function init(){
     document.getElementById('loading').style.display='none';
     document.getElementById('overview').style.display='';
     updateSidebar();
+    if(stats.version){document.getElementById('infoVersion').textContent='v'+stats.version+' — Claude Code session manager'}
   }catch(e){document.getElementById('loading').textContent='Error: '+e.message}
 }
 
@@ -503,7 +504,7 @@ function updateSidebar(){
   document.getElementById('sidebarFooter').innerHTML=`
     <div class="sb-footer-row">
       <span>${allSessions.length} sessions &middot; ${fmtBytes(stats.totalSize)}</span>
-      <span style="font-size:.6rem">v2.0.1</span>
+      <span style="font-size:.6rem">v${stats.version||'?'}</span>
     </div>
     <div class="sb-footer-actions">
       <button id="themeToggleBtn" onclick="cycleTheme()" title="Toggle theme">&#9681;</button>

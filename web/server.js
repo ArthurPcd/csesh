@@ -19,6 +19,9 @@ import { mergeMetadata, setTitle, addTag, removeTag, toggleFavorite, setNote, se
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+import { createRequire } from 'module';
+const PKG_VERSION = createRequire(import.meta.url)('../package.json').version;
+
 const MIN_ID_LENGTH = 8;
 
 let sessionsCache = null;
@@ -297,6 +300,7 @@ async function handleRequest(req, res) {
       const trashItems = await listTrash();
       stats.trashedCount = trashItems.length;
       stats.trashedSize = trashItems.reduce((sum, i) => sum + (i.fileSizeBytes || 0), 0);
+      stats.version = PKG_VERSION;
       send(stats);
       return;
     }
