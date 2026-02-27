@@ -20,7 +20,7 @@ import { mergeMetadata, setTitle as metaSetTitle, addTag as metaAddTag, removeTa
 import { formatBytes, formatDuration, formatDate, timeAgo, estimateCost } from '../lib/utils.js';
 import { getConfig } from '../lib/config.js';
 
-const VERSION = '1.0.1';
+const VERSION = '1.1.0';
 const BRAND = '\u2B21'; // ⬡
 
 const program = new Command();

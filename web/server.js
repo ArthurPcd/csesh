@@ -77,7 +77,10 @@ function parseQuery(url) {
 function corsOrigin(req) {
   const origin = req?.headers?.origin;
   if (!origin) return '*'; // same-origin requests (no Origin header)
-  if (origin.includes('localhost') || origin.includes('127.0.0.1')) return origin;
+  try {
+    const u = new URL(origin);
+    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return origin;
+  } catch { /* invalid origin */ }
   return ''; // deny cross-origin from non-localhost
 }
 
@@ -91,10 +94,21 @@ function json(res, data, status = 200, req = null) {
   res.end(JSON.stringify(data));
 }
 
+const MAX_BODY_SIZE = 1_048_576; // 1MB
+
 async function readBody(req) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', chunk => body += chunk);
+    let size = 0;
+    req.on('data', chunk => {
+      size += chunk.length;
+      if (size > MAX_BODY_SIZE) {
+        req.destroy();
+        reject(new Error('Request body too large'));
+        return;
+      }
+      body += chunk;
+    });
     req.on('end', () => {
       try { resolve(JSON.parse(body)); }
       catch { resolve({}); }
@@ -127,6 +141,23 @@ async function handleRequest(req, res) {
       const html = await readFile(join(__dirname, 'dashboard.html'), 'utf-8');
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(html);
+      return;
+    }
+
+    // ── Vendor static files (local CDN replacements) ──────────
+    const vendorMatch = path.match(/^\/vendor\/([a-z0-9.-]+\.js)$/);
+    if (vendorMatch && method === 'GET') {
+      const filename = vendorMatch[1];
+      try {
+        const content = await readFile(join(__dirname, 'vendor', filename));
+        res.writeHead(200, {
+          'Content-Type': 'application/javascript',
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        });
+        res.end(content);
+      } catch {
+        send({ error: 'Not found' }, 404);
+      }
       return;
     }
 
@@ -435,7 +466,7 @@ export async function startServer(port = 3456) {
     }
     process.exit(1);
   });
-  server.listen(port, () => {
+  server.listen(port, '127.0.0.1', () => {
     console.log(`\n  \u2B21 csesh dashboard`);
     console.log(`  http://localhost:${port}\n`);
     console.log(`  Press Ctrl+C to stop\n`);
