@@ -213,7 +213,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 <body>
 <nav id="sidebar">
   <div class="sb-header" onclick="if(window.innerWidth<=768)this.parentElement.classList.toggle('open')">
-    <h1><span>⬡</span><span class="sb-name"> csesh</span></h1>
+    <h1 onclick="event.stopPropagation();showOverview()" style="cursor:pointer" title="Go to dashboard"><span>⬡</span><span class="sb-name"> csesh</span></h1>
     <button class="sb-toggle" id="sbToggle" onclick="event.stopPropagation();toggleSidebar()" title="Collapse sidebar">◀</button>
   </div>
   <div class="sb-search">
@@ -326,6 +326,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 <div id="kbHelp" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Keyboard Shortcuts</h3>
+    <div class="kb-row"><span>Go to dashboard</span><span class="kb-key">g</span></div>
     <div class="kb-row"><span>Search</span><span class="kb-key">/</span></div>
     <div class="kb-row"><span>Navigate up/down</span><span><span class="kb-key">j</span> <span class="kb-key">k</span></span></div>
     <div class="kb-row"><span>Open session</span><span class="kb-key">Enter</span></div>
@@ -779,7 +780,8 @@ function doGlobalSearch(){
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
   const listVisible=document.getElementById('listView').style.display!=='none';
-  if(e.key==='/'){e.preventDefault();document.getElementById('filterInput')?.focus();showList()}
+  if(e.key==='g'){e.preventDefault();showOverview()}
+  else if(e.key==='/'){e.preventDefault();document.getElementById('filterInput')?.focus();showList()}
   else if(e.key==='?'){e.preventDefault();document.getElementById('kbHelp').style.display='flex'}
   else if(e.key==='Escape'){document.getElementById('kbHelp').style.display='none';if(document.getElementById('detail').style.display!=='none')goBack()}
   else if(e.key==='j'&&listVisible){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.min(focusIdx+1,getFiltered().length-1);highlightRow()}
