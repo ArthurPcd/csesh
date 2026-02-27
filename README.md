@@ -2,25 +2,32 @@
 
 [![CI](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml/badge.svg)](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@arthurpcd/csesh.svg)](https://www.npmjs.com/package/@arthurpcd/csesh)
+[![npm downloads](https://img.shields.io/npm/dm/@arthurpcd/csesh.svg)](https://www.npmjs.com/package/@arthurpcd/csesh)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
+[![GitHub stars](https://img.shields.io/github/stars/ArthurPcd/csesh?style=social)](https://github.com/ArthurPcd/csesh)
+[![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4-pink)](https://github.com/sponsors/ArthurPcd)
 
 Navigate, search, analyze, and clean up your Claude Code sessions -- from the command line or a sleek web dashboard.
+
+**100% local. Zero telemetry. Your session data never leaves your machine.**
+
+> If csesh saves you time, [star the project](https://github.com/ArthurPcd/csesh) and consider [sponsoring](https://github.com/sponsors/ArthurPcd) to support development.
 
 ---
 
 ## Feature Highlights
 
 - **4-tier classification engine** -- auto-delete, suggested, review, keep -- applied automatically based on session content
-- **Deep analysis** -- tool usage breakdown, thinking metrics, files touched, auto-tags, sub-agent detection
-- **Interactive web dashboard** -- charts, batch operations, keyboard shortcuts, conversation viewer with syntax highlighting
+- **Deep analysis** -- tool usage breakdown, thinking metrics, files touched, auto-tags, sub-agent detection, language identification
+- **Interactive web dashboard** -- 6 charts, 9 stat cards, batch operations, keyboard shortcuts, conversation viewer with syntax highlighting
+- **Streamer mode** -- one-click toggle to blur project paths, session IDs, file paths, and working directories for screen recordings
 - **Resume sessions** -- interactive picker to browse and resume any session with `claude --resume`
 - **Custom metadata** -- titles, tags, favorites, notes stored in a separate sidecar (original files never modified)
 - **Safe cleanup** -- trash with restore via manifest; original JSONL files are never deleted directly
 - **Full-text search** across all sessions with project and date filtering
 - **Export** as JSON, CSV, or Markdown
 - **Cost estimation** per session and across all sessions, with per-model token pricing
-- **Streamer mode** — one-click toggle to blur project paths, session IDs, file paths, and CWD for screen recordings
 
 ---
 
@@ -57,7 +64,7 @@ csesh list --tier 1           # only auto-delete candidates
 csesh list --tag bugfix       # filter by tag
 csesh list --favorites        # favorites only
 csesh list --project myapp    # filter by project name
-csesh list --sort size        # sort by: date | size | messages | tier
+csesh list --sort size        # sort by: date | size | messages | tier | project | title
 csesh list --junk             # show only junk sessions (tier 1 + 2)
 csesh list --real             # show only real sessions (tier 4)
 ```
@@ -94,7 +101,7 @@ csesh stats                   # global stats
 csesh stats --project myapp   # project-specific
 ```
 
-Shows total sessions, disk usage, date range, average duration, tier distribution, cleanup potential, message and token totals, estimated cost, model breakdown, top projects, and top tags.
+Shows total sessions, disk usage, date range, average duration, tier distribution, cleanup potential, message and token totals, estimated cost, model breakdown, average cost per session, average messages per session, thinking ratio, cost by day, top files, top projects, and top tags.
 
 ### `cleanup` -- Identify and trash junk sessions
 
@@ -170,9 +177,11 @@ Start the dashboard with `csesh web` and open `http://localhost:3456`.
 
 ### Overview
 
-- Stat cards for total sessions, disk usage, cleanup potential, and estimated cost
+- 9 stat cards: sessions, disk usage, keep count, auto-delete count, messages, estimated cost, already saved, cleanup potential, average cost per session
 - Activity chart showing session frequency over time
 - Distribution charts for models, tiers, and tool usage
+- Cost over time line chart
+- Top files horizontal bar chart
 
 ### Sessions Table
 
@@ -180,6 +189,7 @@ Start the dashboard with `csesh web` and open `http://localhost:3456`.
 - Tier badges with color coding
 - Batch selection for multi-session operations (trash, tag)
 - Inline search and filtering by project, tier, tag, and favorites
+- Tab-based tier filtering: All, Keep, Review, Suggested, Auto-delete, Favorites, Trash
 
 ### Detail View
 
@@ -187,12 +197,24 @@ Start the dashboard with `csesh web` and open `http://localhost:3456`.
 - Full conversation viewer with Markdown rendering and syntax-highlighted code blocks
 - Collapsible thinking blocks
 - Tool usage display with call details
+- Per-message token usage display
 - Token usage and cost breakdown
+
+### Trash View
+
+- Browse all trashed sessions
+- Batch restore and batch permanent delete
+- Individual restore and delete actions
+
+### Streamer Mode
+
+Click the eye icon in the sidebar to blur sensitive information (project paths, session IDs, file paths, working directories). Useful for screen recordings and live demos.
 
 ### Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
+| `g` | Go to dashboard overview |
 | `j` / `k` | Navigate up / down in session list |
 | `/` | Focus search field |
 | `Enter` | Open selected session |
@@ -245,7 +267,7 @@ csesh/
   SECURITY.md
 ```
 
-**Data safety:** Original JSONL session files are never modified. Metadata is stored in a separate `metadata.json` sidecar. Cleanup moves files to `~/.claude-sessions-trash/` with a manifest that enables restore.
+**Data safety:** Original JSONL session files are never modified. Metadata is stored in a separate `metadata.json` sidecar. Cleanup moves files to a local trash directory with a manifest that enables restore.
 
 ---
 
@@ -266,7 +288,7 @@ Create a `config.json` in the tool directory to override defaults:
 |-----|------|---------|-------------|
 | `webPort` | number | `3456` | Port for the web dashboard |
 | `scanMode` | string | `"fast"` | `"fast"` skips deep analysis; `"full"` analyzes every session |
-| `defaultSort` | string | `"date"` | Default sort field: `date`, `size`, `messages`, `tier` |
+| `defaultSort` | string | `"date"` | Default sort field: `date`, `size`, `messages`, `tier`, `project`, `title` |
 | `pageSize` | number | `50` | Default number of sessions per page |
 
 ---
@@ -292,8 +314,11 @@ All endpoints are served by the built-in web server at `http://localhost:<port>/
 | `POST` | `/api/trash/:id` | Trash a session |
 | `POST` | `/api/batch/trash` | Batch trash. Body: `{ "ids": [...] }` |
 | `POST` | `/api/batch/tag` | Batch tag. Body: `{ "ids": [...], "tag": "..." }` |
+| `POST` | `/api/batch/trash-delete` | Batch permanent delete from trash. Body: `{ "ids": [...] }` |
+| `POST` | `/api/batch/restore` | Batch restore from trash. Body: `{ "ids": [...] }` |
 | `GET` | `/api/trash` | List trashed sessions |
 | `POST` | `/api/restore/:id` | Restore a session from trash |
+| `DELETE` | `/api/trash/:id` | Permanently delete a single item from trash |
 
 ---
 
