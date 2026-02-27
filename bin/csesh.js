@@ -16,18 +16,53 @@ import { classifyAll, junkLabel, tierLabel, TIER_LABELS } from '../lib/classifie
 import { filterSessions } from '../lib/search.js';
 import { computeStats } from '../lib/stats.js';
 import { trashSession, restoreSession, listTrash, emptyTrash, deleteFromTrash } from '../lib/cleanup.js';
-import { mergeMetadata, setTitle as metaSetTitle, addTag as metaAddTag, removeTag as metaRemoveTag, toggleFavorite, setNote, getAllTags } from '../lib/metadata.js';
-import { formatBytes, formatDuration, formatDate, timeAgo, estimateCost } from '../lib/utils.js';
+import { mergeMetadata, loadMetadata, setTitle as metaSetTitle, addTag as metaAddTag, removeTag as metaRemoveTag, toggleFavorite, setNote, getAllTags } from '../lib/metadata.js';
+import { formatBytes, formatDuration, formatDate, timeAgo, estimateCost, CLAUDE_DIR, PROJECTS_DIR, TOOL_DIR, CACHE_FILE } from '../lib/utils.js';
 import { getConfig } from '../lib/config.js';
+import { stat as fsStat, access, readdir } from 'fs/promises';
+import { join } from 'path';
+import { homedir } from 'os';
 
 const VERSION = '1.1.0';
 const BRAND = '\u2B21'; // ⬡
+const INIT_MARKER = join(TOOL_DIR, '.csesh-init');
 
 const program = new Command();
 program
   .name('csesh')
   .description('Claude Code session manager')
   .version(VERSION, '-v, --version');
+
+// ── First-run experience ────────────────────────────────────────────────────
+
+async function checkFirstRun() {
+  try {
+    await access(INIT_MARKER);
+    return; // marker exists, not first run
+  } catch {
+    // First run — show welcome
+  }
+
+  const { mkdir, writeFile } = await import('fs/promises');
+
+  console.log();
+  console.log(chalk.bold(`  ${BRAND} Welcome to csesh v${VERSION}`));
+  console.log(chalk.dim('  Claude Code session manager'));
+  console.log();
+  console.log('  Get started with these commands:');
+  console.log();
+  console.log(`    ${chalk.cyan('csesh web')}     ${chalk.dim('Launch the web dashboard')}`);
+  console.log(`    ${chalk.cyan('csesh stats')}   ${chalk.dim('See aggregated statistics')}`);
+  console.log(`    ${chalk.cyan('csesh list')}    ${chalk.dim('Browse all sessions')}`);
+  console.log();
+  console.log(chalk.dim('  Run csesh --help for all commands.'));
+  console.log();
+
+  try {
+    await mkdir(TOOL_DIR, { recursive: true });
+    await writeFile(INIT_MARKER, new Date().toISOString(), 'utf-8');
+  } catch { /* best effort */ }
+}
 
 // ── Custom help formatter ────────────────────────────────────────────────────
 
@@ -145,6 +180,7 @@ program
   .option('--tag <tag>', 'Filter by tag')
   .option('--favorites', 'Show only favorites')
   .option('-n, --limit <n>', 'Limit results', parseInt)
+  .option('--json', 'Output as JSON')
   .action(async (opts) => {
     const sessions = await loadSessions({ project: opts.project });
     let category = null;
@@ -160,6 +196,23 @@ program
       sort: opts.sort,
       limit: opts.limit || 50,
     });
+
+    if (opts.json) {
+      const data = filtered.map(s => ({
+        id: s.id,
+        date: s.lastTimestamp,
+        project: s.shortProject,
+        title: s.displayTitle || s.title,
+        messages: s.userMessageCount + s.assistantMessageCount,
+        size: s.fileSizeBytes,
+        tier: s.tier,
+        tierLabel: s.tierLabel,
+        favorite: s.favorite || false,
+        tags: s.tags || [],
+      }));
+      process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+      return;
+    }
 
     const table = new Table({
       head: ['DATE', 'PROJECT', 'TITLE', 'MSGS', 'SIZE', 'TIER', 'ID'].map(h => chalk.cyan(h)),
@@ -190,12 +243,52 @@ program
 program
   .command('show <id>')
   .description('Show session details')
-  .action(async (id) => {
+  .option('--json', 'Output as JSON')
+  .action(async (id, opts) => {
     const sessions = await loadSessions({ showProgress: false });
     const session = sessions.find(s => s.id === id || s.id.startsWith(id));
     if (!session) {
-      console.log(chalk.red(`  \u2717 Session not found: ${id}`));
+      if (opts.json) {
+        process.stdout.write(JSON.stringify({ error: `Session not found: ${id}` }) + '\n');
+      } else {
+        console.log(chalk.red(`  \u2717 Session not found: ${id}`));
+      }
       process.exit(1);
+    }
+
+    const model = session.models[0] || 'default';
+    const cost = estimateCost(session.tokenUsage, model);
+
+    if (opts.json) {
+      const data = {
+        id: session.id,
+        title: session.displayTitle || session.title,
+        originalTitle: session.customTitle ? session.title : null,
+        project: session.project,
+        shortProject: session.shortProject,
+        firstTimestamp: session.firstTimestamp,
+        lastTimestamp: session.lastTimestamp,
+        durationMs: session.durationMs,
+        userMessageCount: session.userMessageCount,
+        assistantMessageCount: session.assistantMessageCount,
+        fileSizeBytes: session.fileSizeBytes,
+        category: session.category,
+        tier: session.tier,
+        tierLabel: session.tierLabel,
+        junkReasons: session.junkReasons,
+        tags: session.tags || [],
+        favorite: session.favorite || false,
+        notes: session.notes || '',
+        gitBranch: session.gitBranch,
+        cwd: session.cwd,
+        version: session.version,
+        models: session.models,
+        tokenUsage: session.tokenUsage,
+        estimatedCost: cost,
+        filePath: session.filePath,
+      };
+      process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+      return;
     }
 
     console.log(chalk.bold('\n  Session Details\n'));
@@ -222,9 +315,6 @@ program
     console.log(`  ${chalk.cyan('Version:')}   ${session.version || 'N/A'}`);
     console.log(`  ${chalk.cyan('Models:')}    ${session.models.join(', ') || 'N/A'}`);
     console.log(`  ${chalk.cyan('Tokens:')}    ${session.tokenUsage.input.toLocaleString()} in, ${session.tokenUsage.output.toLocaleString()} out, ${session.tokenUsage.cacheRead.toLocaleString()} cached`);
-
-    const model = session.models[0] || 'default';
-    const cost = estimateCost(session.tokenUsage, model);
     console.log(`  ${chalk.cyan('Est. Cost:')} $${cost.toFixed(4)}`);
     console.log(`  ${chalk.cyan('File:')}      ${session.filePath}`);
     console.log();
@@ -317,6 +407,7 @@ program
   .option('-p, --project <name>', 'Filter by project')
   .option('--from <date>', 'From date (YYYY-MM-DD)')
   .option('--to <date>', 'To date (YYYY-MM-DD)')
+  .option('--json', 'Output as JSON')
   .action(async (query, opts) => {
     const sessions = await loadSessions();
     const { sessions: results, total } = filterSessions(sessions, {
@@ -326,6 +417,20 @@ program
       to: opts.to,
       limit: 30,
     });
+
+    if (opts.json) {
+      const data = results.map(s => ({
+        id: s.id,
+        date: s.lastTimestamp,
+        project: s.shortProject,
+        title: s.displayTitle || s.title,
+        messages: s.userMessageCount + s.assistantMessageCount,
+        tier: s.tier,
+        tierLabel: s.tierLabel,
+      }));
+      process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+      return;
+    }
 
     if (results.length === 0) {
       console.log(chalk.yellow(`  No sessions found for "${query}"`));
@@ -359,9 +464,15 @@ program
   .command('stats')
   .description('Show aggregated statistics')
   .option('-p, --project <name>', 'Filter by project')
+  .option('--json', 'Output as JSON')
   .action(async (opts) => {
     const sessions = await loadSessions({ mode: 'fast' });
     const stats = computeStats(sessions, opts.project);
+
+    if (opts.json) {
+      process.stdout.write(JSON.stringify(stats, null, 2) + '\n');
+      return;
+    }
 
     console.log(chalk.bold(`\n  ${BRAND} csesh \u2014 Statistics\n`));
     console.log(`  ${chalk.cyan('Total sessions:')}    ${stats.totalSessions}`);
@@ -403,6 +514,299 @@ program
       console.log(`    ${stats.topTags.slice(0, 10).map(t => chalk.magenta(`#${t.tag}(${t.count})`)).join('  ')}`);
       console.log();
     }
+  });
+
+// ── COST ────────────────────────────────────────────────────────────────────
+
+/**
+ * Build an ASCII sparkline from an array of numbers.
+ * Uses 8 unicode block characters for vertical resolution.
+ */
+function sparkline(values) {
+  if (!values || values.length === 0) return '';
+  const ticks = ['\u2581', '\u2582', '\u2583', '\u2584', '\u2585', '\u2586', '\u2587', '\u2588'];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  return values.map(v => {
+    const idx = Math.min(Math.round(((v - min) / range) * (ticks.length - 1)), ticks.length - 1);
+    return ticks[idx];
+  }).join('');
+}
+
+/**
+ * Get the start of today, this week (Monday), and this month.
+ */
+function getTimePeriodBounds() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayOfWeek = now.getDay();
+  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const weekStart = new Date(today);
+  weekStart.setDate(weekStart.getDate() - mondayOffset);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { today, weekStart, monthStart };
+}
+
+program
+  .command('cost')
+  .description('Show cost breakdown by time period')
+  .option('-p, --project <name>', 'Filter by project')
+  .option('--daily', 'Show daily breakdown for the last 30 days')
+  .option('--json', 'Output as JSON')
+  .action(async (opts) => {
+    const sessions = await loadSessions({ mode: 'fast' });
+    let filtered = sessions;
+    if (opts.project) {
+      const p = opts.project.toLowerCase();
+      filtered = sessions.filter(s =>
+        s.slug === opts.project ||
+        s.shortProject.toLowerCase().includes(p) ||
+        s.project.toLowerCase().includes(p)
+      );
+    }
+
+    // Compute per-session cost
+    const sessionCosts = filtered.map(s => {
+      const model = s.models[0] || 'default';
+      return {
+        session: s,
+        cost: estimateCost(s.tokenUsage, model),
+        date: s.lastTimestamp ? new Date(s.lastTimestamp) : null,
+        day: s.lastTimestamp ? s.lastTimestamp.slice(0, 10) : null,
+      };
+    }).filter(sc => sc.date);
+
+    // Time period bounds
+    const { today, weekStart, monthStart } = getTimePeriodBounds();
+
+    const todayCost = sessionCosts
+      .filter(sc => sc.date >= today)
+      .reduce((sum, sc) => sum + sc.cost, 0);
+    const weekCost = sessionCosts
+      .filter(sc => sc.date >= weekStart)
+      .reduce((sum, sc) => sum + sc.cost, 0);
+    const monthCost = sessionCosts
+      .filter(sc => sc.date >= monthStart)
+      .reduce((sum, sc) => sum + sc.cost, 0);
+    const allTimeCost = sessionCosts
+      .reduce((sum, sc) => sum + sc.cost, 0);
+
+    // Daily breakdown (last 30 days)
+    const dailyCosts = {};
+    const last30 = new Date();
+    last30.setDate(last30.getDate() - 30);
+    for (const sc of sessionCosts) {
+      if (sc.date >= last30 && sc.day) {
+        dailyCosts[sc.day] = (dailyCosts[sc.day] || 0) + sc.cost;
+      }
+    }
+
+    // Build sorted daily array for last 30 days
+    const dailyEntries = [];
+    for (let d = new Date(last30); d <= new Date(); d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      dailyEntries.push({ date: key, cost: dailyCosts[key] || 0 });
+    }
+
+    // Sparkline for last 14 days
+    const last14 = dailyEntries.slice(-14);
+    const sparkValues = last14.map(e => e.cost);
+    const spark = sparkline(sparkValues);
+
+    if (opts.json) {
+      const data = {
+        project: opts.project || null,
+        today: Math.round(todayCost * 10000) / 10000,
+        thisWeek: Math.round(weekCost * 10000) / 10000,
+        thisMonth: Math.round(monthCost * 10000) / 10000,
+        allTime: Math.round(allTimeCost * 10000) / 10000,
+        daily: dailyEntries.map(e => ({ date: e.date, cost: Math.round(e.cost * 10000) / 10000 })),
+        sessions: sessionCosts.length,
+      };
+      process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+      return;
+    }
+
+    console.log(chalk.bold(`\n  ${BRAND} csesh \u2014 Cost Breakdown\n`));
+    if (opts.project) {
+      console.log(`  ${chalk.dim(`Project: ${opts.project}`)}\n`);
+    }
+
+    const costTable = new Table({
+      head: ['PERIOD', 'COST', 'SESSIONS'].map(h => chalk.cyan(h)),
+      colWidths: [20, 14, 12],
+    });
+
+    const todaySessions = sessionCosts.filter(sc => sc.date >= today).length;
+    const weekSessions = sessionCosts.filter(sc => sc.date >= weekStart).length;
+    const monthSessions = sessionCosts.filter(sc => sc.date >= monthStart).length;
+
+    costTable.push(
+      ['Today', chalk.green(`$${todayCost.toFixed(2)}`), todaySessions],
+      ['This week', chalk.green(`$${weekCost.toFixed(2)}`), weekSessions],
+      ['This month', chalk.green(`$${monthCost.toFixed(2)}`), monthSessions],
+      ['All time', chalk.bold.green(`$${allTimeCost.toFixed(2)}`), sessionCosts.length],
+    );
+
+    console.log(costTable.toString());
+
+    // Sparkline
+    console.log();
+    console.log(`  ${chalk.bold('Last 14 days:')} ${chalk.cyan(spark)}`);
+    const minDay = Math.min(...sparkValues);
+    const maxDay = Math.max(...sparkValues);
+    console.log(`  ${chalk.dim(`$${minDay.toFixed(2)} .. $${maxDay.toFixed(2)}`)}`);
+
+    // Daily breakdown
+    if (opts.daily) {
+      console.log();
+      console.log(chalk.bold('  Daily Breakdown (last 30 days)\n'));
+      const dailyTable = new Table({
+        head: ['DATE', 'COST', 'BAR'].map(h => chalk.cyan(h)),
+        colWidths: [14, 12, 40],
+      });
+
+      const maxCost = Math.max(...dailyEntries.map(e => e.cost), 0.01);
+      for (const entry of dailyEntries) {
+        const barLen = Math.round((entry.cost / maxCost) * 30);
+        const bar = entry.cost > 0 ? chalk.cyan('\u2588'.repeat(barLen)) : chalk.dim('\u00b7');
+        const isToday = entry.date === new Date().toISOString().slice(0, 10);
+        const dateStr = isToday ? chalk.bold(entry.date) : entry.date;
+        dailyTable.push([
+          dateStr,
+          entry.cost > 0 ? `$${entry.cost.toFixed(2)}` : chalk.dim('$0.00'),
+          bar,
+        ]);
+      }
+      console.log(dailyTable.toString());
+    }
+
+    console.log();
+  });
+
+// ── DOCTOR ──────────────────────────────────────────────────────────────────
+
+program
+  .command('doctor')
+  .description('Health check and diagnostics')
+  .action(async () => {
+    const checks = [];
+    const ok = (label, detail) => checks.push({ status: 'ok', label, detail });
+    const fail = (label, detail) => checks.push({ status: 'fail', label, detail });
+    const warn = (label, detail) => checks.push({ status: 'warn', label, detail });
+
+    console.log(chalk.bold(`\n  ${BRAND} csesh doctor\n`));
+
+    // 1. Check Claude Code directory
+    try {
+      const info = await fsStat(CLAUDE_DIR);
+      if (info.isDirectory()) {
+        ok('Claude Code directory', CLAUDE_DIR);
+      } else {
+        fail('Claude Code directory', `${CLAUDE_DIR} is not a directory`);
+      }
+    } catch {
+      fail('Claude Code directory', `${CLAUDE_DIR} not found`);
+    }
+
+    // 2. Check projects directory
+    let projectCount = 0;
+    try {
+      const entries = await readdir(PROJECTS_DIR, { withFileTypes: true });
+      projectCount = entries.filter(e => e.isDirectory()).length;
+      ok('Projects directory', `${PROJECTS_DIR} (${projectCount} projects)`);
+    } catch {
+      fail('Projects directory', `${PROJECTS_DIR} not found`);
+    }
+
+    // 3. Count session files
+    try {
+      const files = await findSessionFiles();
+      ok('Session files', `${files.length} sessions found`);
+
+      // 3b. Disk usage
+      let totalBytes = 0;
+      for (const f of files) {
+        try {
+          const info = await fsStat(f.filePath);
+          totalBytes += info.size;
+        } catch { /* skip */ }
+      }
+      ok('Disk usage (sessions)', formatBytes(totalBytes));
+    } catch (err) {
+      fail('Session files', `Error scanning: ${err.message}`);
+    }
+
+    // 4. Cache integrity
+    try {
+      const { readFile } = await import('fs/promises');
+      const raw = await readFile(CACHE_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      const entryCount = Object.keys(parsed.sessions || {}).length;
+      const cacheInfo = await fsStat(CACHE_FILE);
+      ok('Cache file', `${entryCount} entries, ${formatBytes(cacheInfo.size)}`);
+
+      // Check for orphaned cache entries
+      const sessionFiles = await findSessionFiles();
+      const filePaths = new Set(sessionFiles.map(f => f.filePath));
+      let orphaned = 0;
+      for (const key of Object.keys(parsed.sessions || {})) {
+        if (!filePaths.has(key)) orphaned++;
+      }
+      if (orphaned > 0) {
+        warn('Orphaned cache entries', `${orphaned} entries reference missing files`);
+      } else {
+        ok('Cache integrity', 'No orphaned entries');
+      }
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        warn('Cache file', 'Not found (will be created on first scan)');
+      } else {
+        fail('Cache file', `Parse error: ${err.message}`);
+      }
+    }
+
+    // 5. Metadata integrity
+    try {
+      const meta = await loadMetadata();
+      const metaCount = Object.keys(meta.sessions || {}).length;
+      ok('Metadata file', `${metaCount} session entries`);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        warn('Metadata file', 'Not found (will be created when needed)');
+      } else {
+        fail('Metadata file', `Parse error: ${err.message}`);
+      }
+    }
+
+    // 6. Versions
+    ok('csesh version', `v${VERSION}`);
+    ok('Node.js version', process.version);
+
+    // Display results
+    for (const check of checks) {
+      if (check.status === 'ok') {
+        console.log(`  ${chalk.green('\u2713')} ${chalk.bold(check.label)}  ${chalk.dim(check.detail)}`);
+      } else if (check.status === 'warn') {
+        console.log(`  ${chalk.yellow('!')} ${chalk.bold(check.label)}  ${chalk.yellow(check.detail)}`);
+      } else {
+        console.log(`  ${chalk.red('\u2717')} ${chalk.bold(check.label)}  ${chalk.red(check.detail)}`);
+      }
+    }
+
+    const failCount = checks.filter(c => c.status === 'fail').length;
+    const warnCount = checks.filter(c => c.status === 'warn').length;
+
+    console.log();
+    if (failCount > 0) {
+      console.log(chalk.red(`  ${failCount} issue(s) found.`));
+    } else if (warnCount > 0) {
+      console.log(chalk.yellow(`  ${warnCount} warning(s), no critical issues.`));
+    } else {
+      console.log(chalk.green('  All checks passed.'));
+    }
+    console.log();
   });
 
 // ── CLEANUP ──────────────────────────────────────────────────────────────────
@@ -831,4 +1235,7 @@ cacheCmd.command('stats').description('Show cache statistics').action(async () =
   console.log(`  ${chalk.cyan('Disk:')}     ${formatBytes(stats.diskSize)}`);
 });
 
+// ── Run ─────────────────────────────────────────────────────────────────────
+
+await checkFirstRun();
 program.parse();
