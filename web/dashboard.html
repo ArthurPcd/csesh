@@ -47,7 +47,8 @@ input:focus,textarea:focus{border-color:var(--accent)}
 /* Sidebar */
 #sidebar{width:272px;min-width:272px;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s,min-width .2s;height:100vh;position:sticky;top:0}
 #sidebar.collapsed{width:48px;min-width:48px}
-#sidebar.collapsed .sb-section,#sidebar.collapsed .sb-search,#sidebar.collapsed .sb-tiers,#sidebar.collapsed .sb-footer span:first-child{display:none}
+#sidebar.collapsed .sb-section,#sidebar.collapsed .sb-search,#sidebar.collapsed .sb-tiers{display:none}
+#sidebar.collapsed .sb-footer .sb-footer-row,#sidebar.collapsed .sb-footer .sb-footer-actions{display:none}
 #sidebar.collapsed .sb-header h1 .sb-name{display:none}
 .sb-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .sb-header h1{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px}
@@ -97,10 +98,10 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .container{max-width:1400px;margin:0 auto;padding:20px 24px}
 
 /* Stat cards */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px}
-.card{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px}
+.card{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
 .card-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);font-weight:500}
-.card-value{font-size:1.4rem;font-weight:700;margin-top:2px}
+.card-value{font-size:1.2rem;font-weight:700;margin-top:2px}
 .card-value.green{color:var(--green)}.card-value.red{color:var(--red)}.card-value.yellow{color:var(--yellow)}.card-value.blue{color:var(--blue)}
 
 /* Tabs */
@@ -407,7 +408,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 <div id="infoModal" onclick="this.style.display='none'">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>csesh</h3>
-    <div class="subtitle">v2.0.0 — Claude Code session manager</div>
+    <div class="subtitle">v2.0.1 — Claude Code session manager</div>
     <div class="info-author">Arthur Pacaud</div>
     <div class="info-handle">@arthurpcd</div>
     <div class="info-links">
@@ -502,7 +503,7 @@ function updateSidebar(){
   document.getElementById('sidebarFooter').innerHTML=`
     <div class="sb-footer-row">
       <span>${allSessions.length} sessions &middot; ${fmtBytes(stats.totalSize)}</span>
-      <span style="font-size:.6rem">v2.0.0</span>
+      <span style="font-size:.6rem">v2.0.1</span>
     </div>
     <div class="sb-footer-actions">
       <button id="themeToggleBtn" onclick="cycleTheme()" title="Toggle theme">&#9681;</button>
@@ -584,7 +585,7 @@ function renderCharts(){
 function renderTabs(){
   const tabs=[{id:'all',label:'All'},{id:'keep',label:'Keep'},{id:'review',label:'Review'},{id:'suggested',label:'Suggested'},{id:'auto-delete',label:'Auto-delete'},{id:'trash',label:'Trash'},{id:'favorites',label:'★'}];
   document.getElementById('tabs').innerHTML=
-    `<button class="tab" onclick="showOverview()" title="Dashboard" style="color:var(--text-3);font-size:.75rem">&#9666;</button>`+
+    `<button class="tab" onclick="showOverview()" title="Back to Dashboard" style="color:var(--accent);font-size:.8rem">⬡</button>`+
     tabs.map(t=>`<button class="tab${currentTab===t.id?' active':''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('');
 }
 function setTab(id){currentTab=id;currentPage=0;focusIdx=-1;renderTabs();if(id==='trash'){showTrash()}else{showListFromTab()}}
