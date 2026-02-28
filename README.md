@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/dependencies-0-22c55e" alt="zero dependencies" />
   <img src="https://img.shields.io/npm/dm/@arthurpcd/csesh.svg?color=%2322c55e" alt="downloads" />
   <img src="https://img.shields.io/badge/tests-233%20passing-22c55e" alt="tests" />
-  <img src="https://img.shields.io/badge/version-4.1.0-22c55e" alt="version" />
+  <img src="https://img.shields.io/badge/version-4.2.0-22c55e" alt="version" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.3-22c55e" alt="node" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="license" />
 </p>
@@ -85,6 +85,12 @@ npx skills add ArthurPcd/csesh
 The dashboard opens at `http://localhost:3456`.
 
 ---
+
+## What's new in v4.2.0
+
+- **Non-minified vendor files** — Chart.js, marked, and DOMPurify are now shipped as readable, prettified source for supply chain transparency
+- **Code of Conduct** — Contributor Covenant v2.1 added
+- **Improved security scores** — no more `.min.js` files flagged by Socket/Snyk audits
 
 ## What's new in v4.1.0
 
@@ -232,7 +238,7 @@ Nothing is ever deleted directly. Everything goes to trash with a manifest. Rest
 
 ```
 $ npm ls
-@arthurpcd/csesh@4.1.0
+@arthurpcd/csesh@4.2.0
 └── (empty)
 ```
 
