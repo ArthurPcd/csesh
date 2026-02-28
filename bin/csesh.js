@@ -19,6 +19,7 @@ import { trashSession, restoreSession, listTrash, emptyTrash, deleteFromTrash } 
 import { mergeMetadata, loadMetadata, setTitle as metaSetTitle, addTag as metaAddTag, removeTag as metaRemoveTag, toggleFavorite, setNote, getAllTags } from '../lib/metadata.js';
 import { formatBytes, formatDuration, formatDate, timeAgo, estimateCost, CLAUDE_DIR, PROJECTS_DIR, TOOL_DIR, CACHE_FILE } from '../lib/utils.js';
 import { getConfig } from '../lib/config.js';
+import { renameSessionSlug, titleToSlug } from '../lib/rename.js';
 import { stat as fsStat, access, readdir } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -1126,6 +1127,32 @@ program
       execSync(`claude --resume ${selected.id}`, { stdio: 'inherit' });
     } catch {
       // claude exits with non-zero on user interrupt, that's fine
+    }
+  });
+
+// ── RENAME ───────────────────────────────────────────────────────────────────
+
+program.command('rename')
+  .description('Rename a session (updates claude --resume slug)')
+  .argument('<id>', 'Session ID or prefix')
+  .argument('<title...>', 'New title')
+  .action(async (id, titleWords) => {
+    const title = titleWords.join(' ');
+    const slug = titleToSlug(title);
+    console.log(chalk.dim(`  Renaming to slug: ${slug}`));
+    try {
+      const result = await renameSessionSlug(id, title);
+      // Also update csesh metadata
+      await metaSetTitle(result.filePath.match(/([a-f0-9-]{36})\.jsonl/)?.[1] || id, title);
+      console.log(chalk.green(`  ${BRAND} Renamed successfully`));
+      console.log(chalk.dim(`  ${result.originalSlug} → ${result.newSlug}`));
+      console.log(chalk.dim(`  ${result.linesModified} records updated`));
+      console.log(chalk.dim(`  Backup: ${result.backupPath}`));
+      console.log();
+      console.log(`  Now visible in ${chalk.bold('claude --resume')} as ${chalk.cyan(result.newSlug)}`);
+    } catch (err) {
+      console.error(chalk.red(`  Error: ${err.message}`));
+      process.exitCode = 1;
     }
   });
 

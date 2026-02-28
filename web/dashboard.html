@@ -781,10 +781,11 @@ async function editTitle(id){
     if(saved)return;saved=true;
     const v=inp.value.trim();
     if(v&&v!==current){
-      await apiPatch(`/api/sessions/${id}/meta`,{customTitle:v});
+      const res=await apiPatch(`/api/sessions/${id}/meta`,{customTitle:v});
       const s=allSessions.find(x=>x.id===id);
       if(s){s.customTitle=v;s.displayTitle=v}
-      toast('Title updated');
+      if(res.slugRenamed)toast('Renamed — visible in claude --resume');
+      else toast('Title updated (slug unchanged)');
     }
     const display=v||current;
     el.dataset.title=display;

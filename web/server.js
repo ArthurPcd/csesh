@@ -16,6 +16,7 @@ import { filterSessions } from '../lib/search.js';
 import { computeStats } from '../lib/stats.js';
 import { trashSession, restoreSession, listTrash, deleteFromTrash } from '../lib/cleanup.js';
 import { mergeMetadata, setTitle, addTag, removeTag, toggleFavorite, setNote, setTierOverride, getAllTags, batchSetTag, loadMetadata } from '../lib/metadata.js';
+import { renameSessionSlug } from '../lib/rename.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -237,7 +238,20 @@ async function handleRequest(req, res) {
     if (metaMatch && method === 'PATCH') {
       const id = metaMatch[1];
       const body = await readBody(req);
-      if (body.customTitle !== undefined) await setTitle(id, body.customTitle);
+      if (body.customTitle !== undefined) {
+        await setTitle(id, body.customTitle);
+        // Also rename the slug in the JSONL so `claude --resume` shows the new name
+        try {
+          const result = await renameSessionSlug(id, body.customTitle);
+          send({ ok: true, slugRenamed: true, newSlug: result.newSlug, originalSlug: result.originalSlug });
+        } catch (err) {
+          // Slug rename failed but metadata title was saved — partial success
+          console.error('csesh: slug rename failed:', err.message);
+          send({ ok: true, slugRenamed: false, error: err.message });
+        }
+        invalidateCache();
+        return;
+      }
       if (body.notes !== undefined) await setNote(id, body.notes);
       invalidateCache();
       send({ ok: true });
