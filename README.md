@@ -29,6 +29,8 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@arthurpcd/csesh"><strong>npm</strong></a> &nbsp;|&nbsp;
   <a href="https://github.com/ArthurPcd/csesh"><strong>GitHub</strong></a> &nbsp;|&nbsp;
+  <a href="https://skills.sh"><strong>skills.sh</strong></a> &nbsp;|&nbsp;
+  <a href="https://github.com/ArthurPcd/csesh/discussions"><strong>Discussions</strong></a> &nbsp;|&nbsp;
   <a href="https://github.com/sponsors/ArthurPcd"><strong>Sponsor</strong></a>
 </p>
 
@@ -74,6 +76,9 @@ npx @arthurpcd/csesh web
 # Or install globally
 npm install -g @arthurpcd/csesh
 csesh web
+
+# Or install as a Claude Code skill via skills.sh
+npx skills add ArthurPcd/csesh
 ```
 
 The dashboard opens at `http://localhost:3456`.
@@ -134,17 +139,20 @@ Full-text search across all your sessions. Instant results.
 **The killer feature.** csesh is the only tool that syncs session names with `claude --resume`.
 
 ```bash
-csesh rename a1b2c3d4 "Fix login bug"
-#  ⬡ Renamed successfully
+csesh rename
+#  Interactive picker — select a session, type the new name
 #  agile-fluttering-turing → fix-login-bug
 #  Now visible in claude --resume as fix-login-bug
 
+csesh rename a1b2c3d4 "Fix login bug"
+#  Or rename directly by ID
+
 csesh resume
 #  Pick from a list with tier badges, tags, and project info
-#  Launches claude --resume automatically
+#  cd's into the project directory and launches claude --resume
 ```
 
-Under the hood: modifies the `slug` field in the JSONL file (backup + atomic write). Your original data is always safe.
+Under the hood: writes a `custom-title` record in the JSONL file so `claude --resume` displays your renamed title natively. Backup + atomic write -- your original data is always safe.
 
 ### Track costs
 
@@ -185,9 +193,12 @@ Nothing is ever deleted directly. Everything goes to trash with a manifest. Rest
 - 6 charts: activity heatmap, tier distribution, model usage, tool usage, cost over time, top files
 - Session table with sort, filter, batch operations
 - Detail view with full conversation, Markdown rendering, syntax highlighting, collapsible thinking blocks
+- **In-conversation search**: find specific messages with text highlighting, match navigation, and display modes (Cmd+F)
+- **Resume from dashboard**: copy-paste `claude --resume` commands or open directly in terminal
+- **Custom title sync**: renamed sessions appear natively in `claude --resume` picker
 - Streamer mode: blur sensitive paths for screen recordings
 - Dark/light/auto theme
-- Keyboard shortcuts: `j/k` navigate, `g` dashboard, `/` search, `f` favorite, `t` trash
+- Keyboard shortcuts: `j/k` navigate, `g` dashboard, `Cmd+F` search in conversation, `f` favorite, `t` trash
 
 **Everything runs locally on `127.0.0.1`.** No external requests. The three front-end libraries (Chart.js, marked, DOMPurify) are vendored locally.
 
@@ -197,7 +208,7 @@ Nothing is ever deleted directly. Everything goes to trash with a manifest. Rest
 
 ```
 $ npm ls
-@arthurpcd/csesh@3.0.0
+@arthurpcd/csesh@3.4.0
 └── (empty)
 ```
 
@@ -267,6 +278,9 @@ web/
   server.js             Native Node.js HTTP server (http.createServer)
   dashboard.html        Single-file dashboard (vanilla HTML/CSS/JS)
   vendor/               Chart.js, marked, DOMPurify (vendored, no CDN)
+
+skills/csesh/
+  SKILL.md              skills.sh integration (Claude Code agent skill)
 ```
 
 ### Data safety principles
@@ -335,6 +349,13 @@ Create `config.json` in the tool directory to override defaults:
   "pageSize": 50
 }
 ```
+
+---
+
+## Community
+
+- [GitHub Discussions](https://github.com/ArthurPcd/csesh/discussions) — feature requests, Q&A, feedback
+- [skills.sh](https://skills.sh) — install csesh as a Claude Code agent skill
 
 ---
 
