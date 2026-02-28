@@ -724,6 +724,18 @@ async function showDetail(id){
     </div></details>
     <div class="detail-notes" style="margin:8px 0">
       <textarea placeholder="Add notes..." onblur="saveNotes('${s.id}',this.value)">${esc(s.notes||'')}</textarea>
+    </div>
+    <div class="launch-section" style="margin:16px 0;padding:16px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border)">
+      <div style="font-weight:600;margin-bottom:10px;font-size:.9rem">Resume in Terminal</div>
+      <div class="launch-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <code class="launch-cmd" style="flex:1;padding:8px 12px;background:var(--bg-1);border-radius:6px;font-size:.8rem;font-family:var(--mono);overflow-x:auto;white-space:nowrap">claude --resume ${s.id}</code>
+        <button class="btn btn-sm" onclick="copyCmd('claude --resume ${s.id}',this)" title="Copy">Copy</button>
+      </div>
+      <div class="launch-row" style="display:flex;align-items:center;gap:8px">
+        <code class="launch-cmd" style="flex:1;padding:8px 12px;background:var(--bg-1);border-radius:6px;font-size:.8rem;font-family:var(--mono);overflow-x:auto;white-space:nowrap;opacity:.7">claude --resume ${s.id} --dangerously-skip-permissions</code>
+        <button class="btn btn-sm" onclick="copyCmd('claude --resume ${s.id} --dangerously-skip-permissions',this)" title="Copy" style="opacity:.7">Copy</button>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-3);margin-top:6px">Paste in your terminal to resume this session.</div>
     </div>`;
   loadMessages(id);
 }
@@ -757,6 +769,7 @@ function renderMarkdown(text){
   try{if(typeof marked!=='undefined')return sanitizeHtml(marked.parse(text))}catch{}
   return'<pre>'+esc(text)+'</pre>';
 }
+function copyCmd(cmd,btn){navigator.clipboard.writeText(cmd).then(()=>{const orig=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=orig,1500)}).catch(()=>toast('Copy failed','error'))}
 function goBack(){
   document.getElementById('detail').style.display='none';
   if(previousView==='trashView'){document.getElementById('trashView').style.display=''}
