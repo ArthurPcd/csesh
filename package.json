@@ -1,6 +1,6 @@
 {
   "name": "@arthurpcd/csesh",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Navigate, search, analyze, and clean up Claude Code sessions",
   "license": "Apache-2.0",
   "author": "Arthur Pacaud <arthurpacaud04@gmail.com> (https://jpstudio.fr)",
@@ -13,7 +13,7 @@
   "funding": "https://github.com/sponsors/ArthurPcd",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.3.0"
   },
   "keywords": [
     "claude",
@@ -40,9 +40,5 @@
   "scripts": {
     "test": "node --test test/*.test.js"
   },
-  "dependencies": {
-    "chalk": "^5.3.0",
-    "cli-table3": "^0.6.5",
-    "commander": "^12.1.0"
-  }
+  "dependencies": {}
 }

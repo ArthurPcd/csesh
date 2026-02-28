@@ -1,40 +1,74 @@
-# csesh
+<p align="center">
+  <img src="https://img.shields.io/npm/v/@arthurpcd/csesh.svg?color=%2322c55e&label=npm" alt="npm version" />
+  <img src="https://img.shields.io/badge/dependencies-0-22c55e" alt="zero dependencies" />
+  <img src="https://img.shields.io/npm/dm/@arthurpcd/csesh.svg?color=%2322c55e" alt="downloads" />
+  <img src="https://img.shields.io/badge/tests-231%20passing-22c55e" alt="tests" />
+  <img src="https://img.shields.io/badge/node-%3E%3D18.3-22c55e" alt="node" />
+  <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="license" />
+</p>
 
-[![CI](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml/badge.svg)](https://github.com/ArthurPcd/csesh/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/@arthurpcd/csesh.svg)](https://www.npmjs.com/package/@arthurpcd/csesh)
-[![npm downloads](https://img.shields.io/npm/dm/@arthurpcd/csesh.svg)](https://www.npmjs.com/package/@arthurpcd/csesh)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
-[![GitHub stars](https://img.shields.io/github/stars/ArthurPcd/csesh?style=social)](https://github.com/ArthurPcd/csesh)
-[![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4-pink)](https://github.com/sponsors/ArthurPcd)
+<pre align="center">
 
-Navigate, search, analyze, and clean up your Claude Code sessions -- from the command line or a sleek web dashboard.
+     ██████╗ ███████╗ ███████╗ ███████╗ ██╗  ██╗
+    ██╔════╝ ██╔════╝ ██╔════╝ ██╔════╝ ██║  ██║
+    ██║      ███████╗ █████╗   ███████╗ ███████║
+    ██║      ╚════██║ ██╔══╝   ╚════██║ ██╔══██║
+    ╚██████╗ ███████║ ███████╗ ███████║ ██║  ██║
+     ╚═════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚═╝  ╚═╝
 
-**100% local. Zero telemetry. Your session data never leaves your machine.**
+</pre>
 
-> If csesh saves you time, [star the project](https://github.com/ArthurPcd/csesh) and consider [sponsoring](https://github.com/sponsors/ArthurPcd) to support development.
+<h3 align="center">The missing session manager for Claude Code.</h3>
+
+<p align="center">
+  Search, analyze, classify, rename, and clean up your sessions.<br/>
+  From the CLI or a full web dashboard. Zero dependencies. Zero telemetry.<br/>
+  <strong>Your data never leaves your machine.</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@arthurpcd/csesh"><strong>npm</strong></a> &nbsp;|&nbsp;
+  <a href="https://github.com/ArthurPcd/csesh"><strong>GitHub</strong></a> &nbsp;|&nbsp;
+  <a href="https://github.com/sponsors/ArthurPcd"><strong>Sponsor</strong></a>
+</p>
 
 ---
 
-## Feature Highlights
+## The problem
 
-- **4-tier classification engine** -- auto-delete, suggested, review, keep -- applied automatically based on session content
-- **Deep analysis** -- tool usage breakdown, thinking metrics, files touched, auto-tags, sub-agent detection, language identification
-- **Interactive web dashboard** -- 6 charts, 9 stat cards, batch operations, keyboard shortcuts, conversation viewer with syntax highlighting
-- **Streamer mode** -- one-click toggle to blur project paths, session IDs, file paths, and working directories for screen recordings
-- **Resume sessions** -- interactive picker to browse and resume any session with `claude --resume`
-- **Custom metadata** -- titles, tags, favorites, notes stored in a separate sidecar (original files never modified)
-- **Safe cleanup** -- trash with restore via manifest; original JSONL files are never deleted directly
-- **Full-text search** across all sessions with project and date filtering
-- **Export** as JSON, CSV, or Markdown
-- **Cost estimation** per session and across all sessions, with per-model token pricing
+Claude Code stores every conversation as a JSONL file. After a few weeks, you have dozens of sessions. After a few months: hundreds.
+
+- Which session had the auth refactor?
+- How much did those 300 sessions cost?
+- Which ones are empty junk and which ones are real work?
+- How do I resume *that* session from two weeks ago?
+
+There was no tool to answer these questions. Now there is.
+
+```bash
+npx @arthurpcd/csesh web
+```
+
+That's it. One command, no install, no config. The dashboard opens in your browser.
+
+---
+
+## Why csesh
+
+| | Before csesh | With csesh |
+|---|---|---|
+| **Find a session** | Open JSONL files in VSCode, scroll through raw JSON | `csesh search "refactor auth"` -- instant results |
+| **Know your costs** | No idea | `csesh cost` -- today, this week, this month, all-time with sparkline |
+| **Clean up junk** | Delete manually, hope you don't lose something | 4-tier auto-classification, safe trash with restore |
+| **Resume a session** | Copy-paste a UUID from a file path | `csesh rename` + `csesh resume` -- picker with names you chose |
+| **Dependencies** | -- | **0.** Zero npm dependencies. Zero CDN. Zero tracking. |
 
 ---
 
 ## Quick Start
 
 ```bash
-# Run directly with npx
+# Run directly (no install needed)
 npx @arthurpcd/csesh web
 
 # Or install globally
@@ -42,238 +76,256 @@ npm install -g @arthurpcd/csesh
 csesh web
 ```
 
-The web dashboard opens at `http://localhost:3456` by default.
-
-### Skills.sh
-
-```bash
-npx skills add ArthurPcd/csesh
-```
+The dashboard opens at `http://localhost:3456`.
 
 ---
 
-## CLI Reference
+## What csesh does
 
-### `list` -- List sessions
+### Classify
 
-```bash
-csesh list                    # latest 50 sessions
-csesh list --limit 100        # custom limit
-csesh list --tier 4           # only "keep" sessions
-csesh list --tier 1           # only auto-delete candidates
-csesh list --tag bugfix       # filter by tag
-csesh list --favorites        # favorites only
-csesh list --project myapp    # filter by project name
-csesh list --sort size        # sort by: date | size | messages | tier | project | title
-csesh list --junk             # show only junk sessions (tier 1 + 2)
-csesh list --real             # show only real sessions (tier 4)
-```
+Every session is automatically assigned a tier:
 
-### `show <id>` -- Session detail
+| Tier | Label | What it means |
+|:---:|---|---|
+| 1 | **Auto-delete** | Empty, hook-only, snapshot. 100% safe to remove. |
+| 2 | **Suggested** | Short, abandoned. Quick review recommended. |
+| 3 | **Review** | Mixed signals. Manual review needed. |
+| 4 | **Keep** | Real work happened here. |
+
+The classifier is conservative -- it promotes borderline sessions to "keep" rather than risk losing real work. You can override any tier manually.
+
+### Analyze
 
 ```bash
-csesh show <id>               # full detail with metadata, tokens, cost
+csesh analyze <id>
 ```
 
-Displays ID, title, project, date range, duration, message counts, tier, tags, favorites, notes, models, token usage, estimated cost, and file path. Accepts full or partial IDs.
+```
+  Deep Analysis: Fix login bug
 
-### `analyze [id]` -- Deep analysis
+  Tier:           [keep]
+  Turn count:     47
+  Tool calls:     156 (3 failed)
+  Thinking:       28 blocks, 41,203 chars
+  Files touched:  12
+  Language:       en
+  Auto-tags:      #bugfix #auth #typescript
+
+  Tool Breakdown:
+    Edit              52  ████████████████████
+    Read              38  ██████████████
+    Bash              31  ████████████
+    Grep              22  ████████
+    Glob              13  █████
+```
+
+### Search
 
 ```bash
-csesh analyze <id>            # analyze a single session
-csesh analyze                 # analyze ALL sessions (may be slow)
+csesh search "docker migration"
+csesh search "refactor" --project myapp --from 2025-01-01
 ```
 
-Single-session output includes tool usage bar chart, files touched, thinking block statistics, auto-tags, sub-agent detection, and language identification. Batch analysis prints a summary with tier distribution, top tools across all sessions, and top tags.
+Full-text search across all your sessions. Instant results.
 
-### `search <query>` -- Full-text search
+### Rename & Resume
+
+**The killer feature.** csesh is the only tool that syncs session names with `claude --resume`.
 
 ```bash
-csesh search "refactor auth"
-csesh search "docker" --project myapp
-csesh search "migration" --from 2025-01-01 --to 2025-06-30
+csesh rename a1b2c3d4 "Fix login bug"
+#  ⬡ Renamed successfully
+#  agile-fluttering-turing → fix-login-bug
+#  Now visible in claude --resume as fix-login-bug
+
+csesh resume
+#  Pick from a list with tier badges, tags, and project info
+#  Launches claude --resume automatically
 ```
 
-### `stats` -- Aggregated statistics
+Under the hood: modifies the `slug` field in the JSONL file (backup + atomic write). Your original data is always safe.
+
+### Track costs
 
 ```bash
-csesh stats                   # global stats
-csesh stats --project myapp   # project-specific
+csesh cost
 ```
 
-Shows total sessions, disk usage, date range, average duration, tier distribution, cleanup potential, message and token totals, estimated cost, model breakdown, average cost per session, average messages per session, thinking ratio, cost by day, top files, top projects, and top tags.
+```
+  ⬡ csesh — Cost Breakdown
 
-### `cleanup` -- Identify and trash junk sessions
+  ┌────────────────────┬──────────────┬────────────┐
+  │ PERIOD             │ COST         │ SESSIONS   │
+  ├────────────────────┼──────────────┼────────────┤
+  │ Today              │ $12.34       │ 5          │
+  │ This week          │ $89.21       │ 23         │
+  │ This month         │ $342.17      │ 74         │
+  │ All time           │ $1,627.54    │ 312        │
+  └────────────────────┴──────────────┴────────────┘
+
+  Last 14 days: ▁▂▃▁▅▂▁▃▇▁▂█▃▁
+```
+
+### Clean up
 
 ```bash
 csesh cleanup --dry-run       # preview what would be trashed
-csesh cleanup                 # interactive cleanup (prompts per tier)
-csesh cleanup --tier1-only    # auto-delete tier 1 only (100% safe)
+csesh cleanup --tier1-only    # remove tier 1 (100% safe)
+csesh cleanup                 # interactive: prompts per tier
 ```
 
-### `resume` -- Resume a session
+Nothing is ever deleted directly. Everything goes to trash with a manifest. Restore anytime with `csesh trash restore <id>`.
 
-```bash
-csesh resume                  # interactive session picker
-csesh resume --project myapp  # filter by project
-csesh resume --favorites      # only favorites
-csesh resume --tag urgent     # filter by tag
-csesh resume --limit 10       # show fewer choices
-```
+### Web dashboard
 
-Displays an enriched session list with tier badges, favorites, tags, and project info. Select a session by number and it launches `claude --resume <id>`.
+`csesh web` launches a full interactive dashboard:
 
-### `tag <id> <tag>` -- Add a tag
+- 10 stat cards with cost tracking and weekly comparison
+- 6 charts: activity heatmap, tier distribution, model usage, tool usage, cost over time, top files
+- Session table with sort, filter, batch operations
+- Detail view with full conversation, Markdown rendering, syntax highlighting, collapsible thinking blocks
+- Streamer mode: blur sensitive paths for screen recordings
+- Dark/light/auto theme
+- Keyboard shortcuts: `j/k` navigate, `g` dashboard, `/` search, `f` favorite, `t` trash
 
-```bash
-csesh tag a1b2c3d4 bugfix
-```
-
-### `title <id> <title>` -- Set a custom title
-
-```bash
-csesh title a1b2c3d4 "Auth refactor session"
-```
-
-### `export` -- Export session data
-
-```bash
-csesh export --format json                # all sessions as JSON to stdout
-csesh export --format csv                 # all sessions as CSV to stdout
-csesh export --format csv --output out.csv  # write to file
-csesh export --session <id>               # single session as Markdown
-csesh export --session <id> --output s.md # single session to file
-```
-
-### `web` -- Start web dashboard
-
-```bash
-csesh web                     # start on default port 3456
-csesh web --port 8080         # custom port
-```
-
-### `trash` -- Manage trashed sessions
-
-```bash
-csesh trash list              # list all trashed sessions
-csesh trash restore <id>      # restore a session from trash
-csesh trash delete <id>       # permanently delete a single session from trash
-csesh trash empty             # permanently delete items older than 30 days
-csesh trash empty --older-than 7   # custom threshold in days
-```
-
-### `cache` -- Manage the scan cache
-
-```bash
-csesh cache clear             # clear all cached scan data
-csesh cache stats             # show cache entry count and disk size
-```
+**Everything runs locally on `127.0.0.1`.** No external requests. The three front-end libraries (Chart.js, marked, DOMPurify) are vendored locally.
 
 ---
 
-## Web Dashboard
+## Zero dependencies
 
-Start the dashboard with `csesh web` and open `http://localhost:3456`.
+```
+$ npm ls
+@arthurpcd/csesh@3.0.0
+└── (empty)
+```
 
-### Overview
+csesh has **zero npm dependencies**. The three libraries that most CLI tools depend on -- chalk, cli-table3, commander -- are replaced by native modules:
 
-- 9 stat cards: sessions, disk usage, keep count, auto-delete count, messages, estimated cost, already saved, cleanup potential, average cost per session
-- Activity chart showing session frequency over time
-- Distribution charts for models, tiers, and tool usage
-- Cost over time line chart
-- Top files horizontal bar chart
+| What | Was | Now | Lines |
+|---|---|---|---:|
+| Terminal colors | chalk (72 KB) | `lib/colors.js` -- ANSI escape codes + Proxy | 55 |
+| Table formatting | cli-table3 (68 KB + 5 transitive deps) | `lib/table.js` -- UTF-8 box drawing | 120 |
+| CLI parsing | commander (220 KB) | `lib/cli.js` -- `util.parseArgs` native | 270 |
 
-### Sessions Table
-
-- Sortable columns: date, project, title, messages, size, tier
-- Tier badges with color coding
-- Batch selection for multi-session operations (trash, tag)
-- Inline search and filtering by project, tier, tag, and favorites
-- Tab-based tier filtering: All, Keep, Review, Suggested, Auto-delete, Favorites, Trash
-
-### Detail View
-
-- Editable title, tags, favorites, and notes
-- Full conversation viewer with Markdown rendering and syntax-highlighted code blocks
-- Collapsible thinking blocks
-- Tool usage display with call details
-- Per-message token usage display
-- Token usage and cost breakdown
-
-### Trash View
-
-- Browse all trashed sessions
-- Batch restore and batch permanent delete
-- Individual restore and delete actions
-
-### Streamer Mode
-
-Click the eye icon in the sidebar to blur sensitive information (project paths, session IDs, file paths, working directories). Useful for screen recordings and live demos.
-
-### Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| `g` | Go to dashboard overview |
-| `j` / `k` | Navigate up / down in session list |
-| `/` | Focus search field |
-| `Enter` | Open selected session |
-| `Esc` | Go back / close detail view |
-| `f` | Toggle favorite on selected session |
-| `t` | Trash selected session |
-| `?` | Show keyboard shortcut help |
+**Why it matters:**
+- `npx @arthurpcd/csesh web` resolves in under 2 seconds on a cold machine
+- Zero supply chain attack vectors (cli-table3 pulled `@colors/colors`, the fork of the sabotaged `colors.js`)
+- `npm audit` has nothing to audit
+- No `node_modules` bloat, no transitive dependency surprises
 
 ---
 
-## Tier Classification
+## Full CLI Reference
 
-| Tier | Label | Description |
-|------|-------|-------------|
-| 1 | Auto-delete | Empty, hook-only, snapshot-only. 100% safe to remove. |
-| 2 | Suggested | Short/abandoned sessions. Quick review recommended. |
-| 3 | Review | Needs manual review. Does not clearly fit another tier. |
-| 4 | Keep | Substantive conversations with real work. |
+| Command | Description |
+|---|---|
+| `csesh list` | List sessions (filter by tier, tag, project, favorites) |
+| `csesh show <id>` | Full session detail with metadata, tokens, cost |
+| `csesh analyze [id]` | Deep analysis: tools, thinking, files, auto-tags |
+| `csesh search <query>` | Full-text search with project and date filtering |
+| `csesh stats` | Aggregated statistics across all sessions |
+| `csesh cost` | Cost breakdown: today / week / month / all-time + sparkline |
+| `csesh cleanup` | Interactive trash by tier (dry-run available) |
+| `csesh resume` | Interactive picker to resume a session in Claude Code |
+| `csesh rename <id> <title>` | Rename session slug (syncs with `claude --resume`) |
+| `csesh tag <id> <tag>` | Add a tag to a session |
+| `csesh title <id> <title>` | Set a custom display title |
+| `csesh export` | Export as JSON, CSV, or Markdown |
+| `csesh web` | Start the web dashboard |
+| `csesh doctor` | Health check: Claude dir, cache, metadata, versions |
+| `csesh trash list\|restore\|delete\|empty` | Manage trashed sessions |
+| `csesh cache clear\|stats` | Manage the scan cache |
 
-Tiers are auto-assigned based on session content (message count, tool usage, duration, file activity). You can override the tier per session via the web dashboard or the REST API.
+All commands support `--json` for machine-readable output. Use `--help` on any command for full options.
 
 ---
 
 ## Architecture
 
 ```
-csesh/
-  bin/
-    csesh.js                    # CLI entry point (commander)
-  lib/
-    analyzer.js                 # Deep session analysis (tools, thinking, tags)
-    cache.js                    # Disk cache with mtime + size invalidation
-    classifier.js               # 4-tier classification engine
-    cleanup.js                  # Trash / restore (never direct delete)
-    config.js                   # Configuration loader
-    metadata.js                 # Sidecar metadata (titles, tags, favorites, notes)
-    scanner.js                  # JSONL file scanner (fast + full modes)
-    search.js                   # Filtering, sorting, full-text search
-    stats.js                    # Aggregated statistics and cost estimation
-    utils.js                    # Shared constants and helpers
-  web/
-    server.js                   # Native Node.js HTTP server (zero dependencies)
-    dashboard.html              # Single-file production dashboard (HTML/CSS/JS)
-  skills/
-    csesh/SKILL.md              # skills.sh skill definition
-  config.default.json           # Default configuration
-  package.json
-  LICENSE
-  CONTRIBUTING.md
-  SECURITY.md
+bin/csesh.js            CLI entry point (zero external dependencies)
+
+lib/
+  scanner.js            JSONL parser: fast mode (headers) + full mode (deep analysis)
+  classifier.js         4-tier engine: weighted signals, conservative promotion
+  analyzer.js           Tool usage, thinking metrics, auto-tags, language detection
+  cache.js              Disk cache keyed by file path + mtime + size
+  metadata.js           Sidecar store: titles, tags, favorites, notes
+  rename.js             JSONL slug rewriter (backup + atomic write)
+  cleanup.js            Trash with manifest restore, never direct delete
+  search.js             Full-text search, filtering, sorting
+  stats.js              Aggregated statistics and cost estimation
+  cli.js                Native CLI framework (util.parseArgs)
+  colors.js             Native ANSI colors (Proxy-based)
+  table.js              Native table formatter (UTF-8 box drawing)
+  utils.js              Shared constants and helpers
+  config.js             Configuration loader
+
+web/
+  server.js             Native Node.js HTTP server (http.createServer)
+  dashboard.html        Single-file dashboard (vanilla HTML/CSS/JS)
+  vendor/               Chart.js, marked, DOMPurify (vendored, no CDN)
 ```
 
-**Data safety:** Original JSONL session files are never modified. Metadata is stored in a separate `metadata.json` sidecar. Cleanup moves files to a local trash directory with a manifest that enables restore.
+### Data safety principles
+
+1. **Original JSONL files are never deleted.** Cleanup moves to trash with a manifest.
+2. **Metadata is stored in a sidecar.** Titles, tags, favorites, notes live in `metadata.json`, not in the JSONL.
+3. **Rename creates a backup.** `csesh rename` writes a `.bak` before modifying the slug, using atomic write (temp + rename).
+4. **Uninstall leaves no trace.** Remove csesh and your Claude Code data is exactly as it was.
+
+---
+
+## REST API
+
+The web server exposes a full REST API at `http://localhost:<port>/api/`.
+
+<details>
+<summary>View all endpoints</summary>
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/sessions` | List sessions. Params: `project`, `tier`, `tag`, `favorite`, `sort`, `q`, `limit`, `offset` |
+| `GET` | `/api/sessions/:id` | Session detail (triggers deep analysis if not cached) |
+| `GET` | `/api/sessions/:id/messages` | Conversation messages with rich content blocks |
+| `PATCH` | `/api/sessions/:id/meta` | Update title / notes (also renames JSONL slug) |
+| `POST` | `/api/sessions/:id/tags` | Add a tag |
+| `DELETE` | `/api/sessions/:id/tags/:tag` | Remove a tag |
+| `POST` | `/api/sessions/:id/favorite` | Toggle favorite |
+| `POST` | `/api/sessions/:id/tier` | Override tier (1--4) |
+| `GET` | `/api/stats` | Aggregated statistics |
+| `GET` | `/api/projects` | Project breakdown |
+| `GET` | `/api/search` | Full-text search. Param: `q` |
+| `GET` | `/api/tags` | All known tags |
+| `POST` | `/api/trash/:id` | Trash a session |
+| `POST` | `/api/batch/trash` | Batch trash `{ "ids": [...] }` |
+| `POST` | `/api/batch/tag` | Batch tag `{ "ids": [...], "tag": "..." }` |
+| `POST` | `/api/batch/trash-delete` | Batch permanent delete from trash |
+| `POST` | `/api/batch/restore` | Batch restore from trash |
+| `GET` | `/api/trash` | List trashed sessions |
+| `POST` | `/api/restore/:id` | Restore from trash |
+| `DELETE` | `/api/trash/:id` | Permanently delete from trash |
+
+</details>
+
+---
+
+## Security
+
+- **Binds to `127.0.0.1` only** -- the dashboard is never exposed to the network
+- **CORS strict** -- only same-origin requests accepted
+- **Body limit** -- 1 MB max request body
+- **DOMPurify** -- all HTML sanitized before rendering
+- **No CDN, no external requests** -- everything served from local vendored files
+- **npm Trusted Publishing** -- published via GitHub Actions OIDC (no stored tokens)
 
 ---
 
 ## Configuration
 
-Create a `config.json` in the tool directory to override defaults:
+Create `config.json` in the tool directory to override defaults:
 
 ```json
 {
@@ -284,47 +336,11 @@ Create a `config.json` in the tool directory to override defaults:
 }
 ```
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `webPort` | number | `3456` | Port for the web dashboard |
-| `scanMode` | string | `"fast"` | `"fast"` skips deep analysis; `"full"` analyzes every session |
-| `defaultSort` | string | `"date"` | Default sort field: `date`, `size`, `messages`, `tier`, `project`, `title` |
-| `pageSize` | number | `50` | Default number of sessions per page |
-
----
-
-## API Reference
-
-All endpoints are served by the built-in web server at `http://localhost:<port>/api/`.
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/sessions` | List sessions. Query params: `project`, `tier`, `tag`, `favorite`, `sort`, `q`, `limit`, `offset` |
-| `GET` | `/api/sessions/:id` | Session detail (triggers deep analysis if not cached) |
-| `GET` | `/api/sessions/:id/messages` | Session messages with rich content blocks |
-| `PATCH` | `/api/sessions/:id/meta` | Update title and/or notes |
-| `POST` | `/api/sessions/:id/tags` | Add a tag |
-| `DELETE` | `/api/sessions/:id/tags/:tag` | Remove a tag |
-| `POST` | `/api/sessions/:id/favorite` | Toggle favorite status |
-| `POST` | `/api/sessions/:id/tier` | Set tier override (1--4) |
-| `GET` | `/api/stats` | Aggregated statistics |
-| `GET` | `/api/projects` | Project breakdown |
-| `GET` | `/api/search` | Full-text search. Query param: `q` |
-| `GET` | `/api/tags` | List all known tags |
-| `POST` | `/api/trash/:id` | Trash a session |
-| `POST` | `/api/batch/trash` | Batch trash. Body: `{ "ids": [...] }` |
-| `POST` | `/api/batch/tag` | Batch tag. Body: `{ "ids": [...], "tag": "..." }` |
-| `POST` | `/api/batch/trash-delete` | Batch permanent delete from trash. Body: `{ "ids": [...] }` |
-| `POST` | `/api/batch/restore` | Batch restore from trash. Body: `{ "ids": [...] }` |
-| `GET` | `/api/trash` | List trashed sessions |
-| `POST` | `/api/restore/:id` | Restore a session from trash |
-| `DELETE` | `/api/trash/:id` | Permanently delete a single item from trash |
-
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting issues, submitting pull requests, and setting up a development environment.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -334,4 +350,8 @@ Apache-2.0 -- see [LICENSE](LICENSE).
 
 ---
 
-Built by [Arthur Pacaud](https://jpstudio.fr) ([@ArthurPcd](https://github.com/ArthurPcd))
+<p align="center">
+  Built by <a href="https://jpstudio.fr">Arthur Pacaud</a> (<a href="https://github.com/ArthurPcd">@ArthurPcd</a>)
+  <br/><br/>
+  If csesh saves you time, <a href="https://github.com/ArthurPcd/csesh">star the project</a> and consider <a href="https://github.com/sponsors/ArthurPcd">sponsoring</a>.
+</p>

@@ -7,9 +7,9 @@
  * https://github.com/ArthurPcd/csesh
  */
 
-import { Command } from 'commander';
-import chalk from 'chalk';
-import Table from 'cli-table3';
+import { Command } from '../lib/cli.js';
+import chalk from '../lib/colors.js';
+import Table from '../lib/table.js';
 import { findSessionFiles, fullScan, fastScan, readMessages } from '../lib/scanner.js';
 import { getCached, setCached, flushCache, clearCache, cacheStats } from '../lib/cache.js';
 import { classifyAll, junkLabel, tierLabel, TIER_LABELS } from '../lib/classifier.js';
@@ -33,7 +33,7 @@ const program = new Command();
 program
   .name('csesh')
   .description('Claude Code session manager')
-  .version(VERSION, '-v, --version');
+  .version(VERSION);
 
 // ── First-run experience ────────────────────────────────────────────────────
 
@@ -1122,9 +1122,9 @@ program
     console.log(chalk.green(`  \u2713 Resuming: ${selected.displayTitle || selected.title}`));
     console.log();
 
-    const { execSync } = await import('child_process');
+    const { execFileSync } = await import('child_process');
     try {
-      execSync(`claude --resume ${selected.id}`, { stdio: 'inherit' });
+      execFileSync('claude', ['--resume', selected.id], { stdio: 'inherit' });
     } catch {
       // claude exits with non-zero on user interrupt, that's fine
     }
