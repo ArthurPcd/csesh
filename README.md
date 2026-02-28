@@ -2,7 +2,8 @@
   <img src="https://img.shields.io/npm/v/@arthurpcd/csesh.svg?color=%2322c55e&label=npm" alt="npm version" />
   <img src="https://img.shields.io/badge/dependencies-0-22c55e" alt="zero dependencies" />
   <img src="https://img.shields.io/npm/dm/@arthurpcd/csesh.svg?color=%2322c55e" alt="downloads" />
-  <img src="https://img.shields.io/badge/tests-231%20passing-22c55e" alt="tests" />
+  <img src="https://img.shields.io/badge/tests-233%20passing-22c55e" alt="tests" />
+  <img src="https://img.shields.io/badge/version-4.0.0-22c55e" alt="version" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.3-22c55e" alt="node" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="license" />
 </p>
@@ -82,6 +83,17 @@ npx skills add ArthurPcd/csesh
 ```
 
 The dashboard opens at `http://localhost:3456`.
+
+---
+
+## What's new in v4.0.0
+
+- **Wider activity heatmap** — 70/30 split gives the heatmap more room to breathe
+- **Stacked top section** — heatmap (365d) + activity (30d) on the left, Top Sessions on the right, same height
+- **Token Breakdown chart** — doughnut showing input/output/cache read/cache write proportions
+- **Cost by Project fixed** — now computed server-side with client-side fallback
+- **Classify & Clean workflow** — documented end-to-end flow: `analyze → cleanup --dry-run → cleanup`, with tag/title follow-ups
+- **Claude Code skill integration** — SKILL.md now documents the full classify/clean workflow so Claude Code knows how to orchestrate it
 
 ---
 
@@ -175,22 +187,34 @@ csesh cost
   Last 14 days: ▁▂▃▁▅▂▁▃▇▁▂█▃▁
 ```
 
-### Clean up
+### Classify & Clean
+
+The full workflow to organize and clean up sessions:
 
 ```bash
+csesh analyze                 # deep analysis + auto-classify all sessions
 csesh cleanup --dry-run       # preview what would be trashed
 csesh cleanup --tier1-only    # remove tier 1 (100% safe)
 csesh cleanup                 # interactive: prompts per tier
 ```
 
-Nothing is ever deleted directly. Everything goes to trash with a manifest. Restore anytime with `csesh trash restore <id>`.
+After analyzing, tag and title the sessions worth keeping:
+
+```bash
+csesh tag <id> bugfix         # tag important sessions
+csesh title <id> "Fix auth"   # name unnamed sessions
+csesh web                     # visual review in the dashboard
+```
+
+Nothing is ever deleted directly. Everything goes to trash with a manifest. Restore anytime with `csesh trash restore <id>`. The dashboard automatically reflects classification — the Refresh button re-fetches and re-classifies all sessions.
 
 ### Web dashboard
 
 `csesh web` launches a full interactive dashboard:
 
 - 10 stat cards with cost tracking and weekly comparison
-- 6 charts: activity heatmap, tier distribution, model usage, tool usage, cost over time, top files
+- Activity heatmap (365 days) + activity chart (30 days) stacked alongside Top Sessions
+- 7 charts: model distribution, token breakdown, tier distribution, cost over time, cost by project, top tools, top files
 - Session table with sort, filter, batch operations
 - Detail view with full conversation, Markdown rendering, syntax highlighting, collapsible thinking blocks
 - **In-conversation search**: find specific messages with text highlighting, match navigation, and display modes (Cmd+F)
@@ -208,7 +232,7 @@ Nothing is ever deleted directly. Everything goes to trash with a manifest. Rest
 
 ```
 $ npm ls
-@arthurpcd/csesh@3.4.0
+@arthurpcd/csesh@4.0.0
 └── (empty)
 ```
 

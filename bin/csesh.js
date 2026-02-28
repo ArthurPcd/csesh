@@ -169,6 +169,92 @@ function tierBadge(tier) {
   return color(`[${label}]`);
 }
 
+// ── Paginated Picker ─────────────────────────────────────────────────────────
+
+async function paginatedPicker({ sessions, pageSize = 20, title = 'select', project = null, tag = null, favorite = null } = {}) {
+  const { sessions: all } = filterSessions(sessions, {
+    project,
+    tag,
+    favorite,
+    sort: 'date',
+    limit: 0,
+  });
+
+  if (all.length === 0) {
+    console.log(chalk.yellow('  No sessions found'));
+    return null;
+  }
+
+  const totalPages = Math.ceil(all.length / pageSize);
+  let currentPage = 0;
+
+  const readline = await import('readline');
+
+  function renderPage() {
+    const start = currentPage * pageSize;
+    const end = Math.min(start + pageSize, all.length);
+    const page = all.slice(start, end);
+
+    console.log(`\n  ${BRAND} ${chalk.bold(`csesh ${title}`)}`);
+    console.log(chalk.dim(`  Page ${currentPage + 1}/${totalPages} (${all.length} total)\n`));
+
+    for (let i = 0; i < page.length; i++) {
+      const s = page[i];
+      const globalIdx = start + i + 1;
+      const num = String(globalIdx).padStart(3);
+      const fav = s.favorite ? chalk.yellow('\u2605') : ' ';
+      const badge = tierBadge(s.tier);
+      const displayTitle = (s.displayTitle || s.title).slice(0, 50);
+      const tags = (s.tags || []).slice(0, 3).map(t => chalk.magenta(`#${t}`)).join(' ');
+      const date = s.lastTimestamp?.slice(0, 10) || '';
+
+      console.log(`  ${chalk.dim(num)}  ${fav} ${badge}  ${displayTitle} ${tags}`);
+      console.log(`       ${chalk.dim(s.shortProject)} ${chalk.dim('\u00b7')} ${chalk.dim(date)}`);
+    }
+
+    console.log();
+    const nav = [];
+    if (currentPage > 0) nav.push(chalk.cyan('p') + chalk.dim('=prev'));
+    if (currentPage < totalPages - 1) nav.push(chalk.cyan('n') + chalk.dim('=next'));
+    nav.push(chalk.cyan('q') + chalk.dim('=quit'));
+    console.log(`  ${nav.join(' | ')}`);
+  }
+
+  renderPage();
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+  while (true) {
+    const answer = await new Promise(resolve => {
+      rl.question(chalk.cyan(`  Select session (1-${all.length}): `), resolve);
+    });
+
+    const trimmed = answer.trim().toLowerCase();
+    if (trimmed === 'q') {
+      rl.close();
+      return null;
+    }
+    if (trimmed === 'n' && currentPage < totalPages - 1) {
+      currentPage++;
+      renderPage();
+      continue;
+    }
+    if (trimmed === 'p' && currentPage > 0) {
+      currentPage--;
+      renderPage();
+      continue;
+    }
+
+    const idx = parseInt(trimmed) - 1;
+    if (!isNaN(idx) && idx >= 0 && idx < all.length) {
+      rl.close();
+      return { session: all[idx], rl: null };
+    }
+
+    console.log(chalk.red('  \u2717 Invalid input — enter a number, n, p, or q'));
+  }
+}
+
 // ── LIST ─────────────────────────────────────────────────────────────────────
 
 program
@@ -1069,56 +1155,22 @@ program
   .command('resume')
   .description('Pick a session and resume it in Claude Code')
   .option('-p, --project <name>', 'Filter by project')
-  .option('-n, --limit <n>', 'Number of sessions to show', parseInt, 20)
   .option('--favorites', 'Show only favorites')
   .option('--tag <tag>', 'Filter by tag')
   .action(async (opts) => {
     const sessions = await loadSessions({ project: opts.project });
 
-    const { sessions: filtered } = filterSessions(sessions, {
+    const result = await paginatedPicker({
+      sessions,
+      title: 'resume',
       project: opts.project,
       tag: opts.tag,
       favorite: opts.favorites || null,
-      sort: 'date',
-      limit: opts.limit,
     });
 
-    if (filtered.length === 0) {
-      console.log(chalk.yellow('  No sessions found'));
-      return;
-    }
+    if (!result) return;
 
-    console.log(`\n  ${BRAND} ${chalk.bold('csesh resume')}\n`);
-
-    for (let i = 0; i < filtered.length; i++) {
-      const s = filtered[i];
-      const num = String(i + 1).padStart(3);
-      const fav = s.favorite ? chalk.yellow('\u2605') : ' ';
-      const badge = tierBadge(s.tier);
-      const title = (s.displayTitle || s.title).slice(0, 50);
-      const tags = (s.tags || []).slice(0, 3).map(t => chalk.magenta(`#${t}`)).join(' ');
-      const date = s.lastTimestamp?.slice(0, 10) || '';
-
-      console.log(`  ${chalk.dim(num)}  ${fav} ${badge}  ${title} ${tags}`);
-      console.log(`       ${chalk.dim(s.shortProject)} ${chalk.dim('\u00b7')} ${chalk.dim(date)}`);
-    }
-
-    console.log();
-
-    const readline = await import('readline');
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await new Promise(resolve => {
-      rl.question(chalk.cyan(`  Select session (1-${filtered.length}): `), resolve);
-    });
-    rl.close();
-
-    const idx = parseInt(answer) - 1;
-    if (isNaN(idx) || idx < 0 || idx >= filtered.length) {
-      console.log(chalk.red('  \u2717 Invalid selection'));
-      process.exit(1);
-    }
-
-    const selected = filtered[idx];
+    const selected = result.session;
     console.log(chalk.green(`  \u2713 Resuming: ${selected.displayTitle || selected.title}`));
     const resumeDir = selected.cwd || selected.project;
     if (resumeDir) console.log(chalk.dim(`  in ${resumeDir}`));
@@ -1142,7 +1194,6 @@ program.command('rename')
   .argument('[id]', 'Session ID or prefix (shows picker if omitted)')
   .argument('[title...]', 'New title (prompts if omitted)')
   .option('-p, --project <name>', 'Filter by project')
-  .option('-n, --limit <n>', 'Number of sessions to show', parseInt, 20)
   .action(async (id, titleWords, opts) => {
     let sessionId = id;
     let title = titleWords && titleWords.length > 0 ? titleWords.join(' ') : null;
@@ -1150,48 +1201,27 @@ program.command('rename')
     // If no ID provided, show interactive picker
     if (!sessionId) {
       const sessions = await loadSessions({ project: opts.project });
-      const { sessions: filtered } = filterSessions(sessions, {
+
+      const result = await paginatedPicker({
+        sessions,
+        title: 'rename',
         project: opts.project,
-        sort: 'date',
-        limit: opts.limit,
       });
-      if (filtered.length === 0) {
-        console.log(chalk.yellow('  No sessions found'));
-        return;
-      }
-      console.log(`\n  ${BRAND} ${chalk.bold('csesh rename')}\n`);
-      for (let i = 0; i < filtered.length; i++) {
-        const s = filtered[i];
-        const num = String(i + 1).padStart(3);
-        const fav = s.favorite ? chalk.yellow('\u2605') : ' ';
-        const badge = tierBadge(s.tier);
-        const t = (s.displayTitle || s.title).slice(0, 50);
-        const date = s.lastTimestamp?.slice(0, 10) || '';
-        console.log(`  ${chalk.dim(num)}  ${fav} ${badge}  ${t}`);
-        console.log(`       ${chalk.dim(s.shortProject)} ${chalk.dim('\u00b7')} ${chalk.dim(date)}`);
-      }
-      console.log();
-      const readline = await import('readline');
-      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-      const answer = await new Promise(resolve => {
-        rl.question(chalk.cyan(`  Select session (1-${filtered.length}): `), resolve);
-      });
-      const idx = parseInt(answer) - 1;
-      if (isNaN(idx) || idx < 0 || idx >= filtered.length) {
-        rl.close();
-        console.log(chalk.red('  \u2717 Invalid selection'));
-        process.exit(1);
-      }
-      sessionId = filtered[idx].id;
-      console.log(chalk.dim(`  Selected: ${filtered[idx].displayTitle || filtered[idx].title}`));
+
+      if (!result) return;
+
+      sessionId = result.session.id;
+      console.log(chalk.dim(`  Selected: ${result.session.displayTitle || result.session.title}`));
 
       // Prompt for title if not provided
       if (!title) {
+        const readline = await import('readline');
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
         title = await new Promise(resolve => {
           rl.question(chalk.cyan('  New title: '), resolve);
         });
+        rl.close();
       }
-      rl.close();
       if (!title || !title.trim()) {
         console.log(chalk.red('  \u2717 Title cannot be empty'));
         process.exit(1);

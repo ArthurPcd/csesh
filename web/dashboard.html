@@ -156,6 +156,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 
 /* Charts */
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.charts-3{grid-template-columns:1fr 1fr 1fr}
 .chart-box{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:16px}
 .chart-box h4{font-size:.8rem;font-weight:600;color:var(--text-2);margin-bottom:10px}
 .chart-box canvas{max-height:220px}
@@ -186,7 +187,17 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .msg-content pre code{background:none;padding:0}
 .msg-content p{margin:4px 0}
 .msg-content ul,.msg-content ol{padding-left:20px;margin:4px 0}
+.msg-content ul.contains-task-list{list-style:none;padding-left:4px}
+.msg-content li.task-list-item{display:flex;align-items:flex-start;gap:6px}
+.msg-content li.task-list-item input[type="checkbox"]{margin-top:5px;accent-color:var(--accent);pointer-events:none}
 .msg-content h1,.msg-content h2,.msg-content h3{margin:12px 0 4px;font-size:1em;font-weight:600}
+.msg-content table{width:100%;border-collapse:collapse;margin:8px 0;font-size:.8rem}
+.msg-content th{text-align:left;padding:6px 10px;border:1px solid var(--border);background:var(--bg-2);font-weight:600;font-size:.75rem}
+.msg-content td{padding:6px 10px;border:1px solid var(--border)}
+.msg-content tr:hover td{background:var(--bg-2)}
+.msg-content blockquote{border-left:3px solid var(--border);padding:4px 12px;margin:8px 0;color:var(--text-2)}
+.msg-content hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+.msg-content img{max-width:100%;border-radius:var(--radius)}
 .thinking-toggle{font-size:.72rem;color:var(--text-3);cursor:pointer;background:var(--bg-3);border:1px solid var(--border);border-radius:4px;padding:3px 10px;margin:4px 0;display:inline-block}
 .thinking-toggle:hover{color:var(--text-1)}
 .thinking-content{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin:4px 0;font-size:.78rem;color:var(--text-2);white-space:pre-wrap;max-height:400px;overflow-y:auto;display:none;font-family:var(--mono);line-height:1.4}
@@ -221,8 +232,12 @@ input:focus,textarea:focus{border-color:var(--accent)}
 #kbHelp{position:fixed;inset:0;background:var(--shadow-modal);z-index:300;display:none;align-items:center;justify-content:center}
 #kbHelp .modal{background:var(--bg-1);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:400px;width:90%}
 #kbHelp h3{margin-bottom:12px;font-size:1rem}
-.kb-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.82rem}
+.kb-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.82rem}
 .kb-key{background:var(--bg-3);border:1px solid var(--border);border-radius:4px;padding:1px 8px;font-family:var(--mono);font-size:.75rem}
+.kb-edit{cursor:pointer;border-radius:4px;padding:2px 4px;transition:.15s}
+.kb-edit:hover{background:var(--bg-3)}
+.kb-edit.recording{background:var(--accent-bg);border:1px solid var(--accent);animation:kbPulse 1s infinite}
+@keyframes kbPulse{0%,100%{opacity:1}50%{opacity:.6}}
 
 /* Streamer mode */
 .streamer-mode .sensitive{filter:blur(5px);user-select:none;transition:filter .2s}
@@ -236,7 +251,9 @@ input:focus,textarea:focus{border-color:var(--accent)}
 /* Activity heatmap */
 .heatmap-wrap{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
 .heatmap-wrap h4{font-size:.8rem;font-weight:600;color:var(--text-2);margin-bottom:10px}
-.heatmap-container{overflow-x:auto}
+.heatmap-container{overflow-x:auto;scrollbar-width:thin}
+.heatmap-container::-webkit-scrollbar{height:4px}
+.heatmap-container::-webkit-scrollbar-thumb{background:var(--bg-4);border-radius:2px}
 .heatmap{display:flex;gap:2px}
 .heatmap-col{display:flex;flex-direction:column;gap:2px}
 .heatmap-cell{width:11px;height:11px;border-radius:2px;background:var(--heatmap-0);position:relative;cursor:default}
@@ -257,6 +274,26 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .cost-compare.up{color:var(--red)}
 .cost-compare.down{color:var(--green)}
 
+/* Overview top row: left stack (heatmap + activity) + top sessions */
+.overview-top-row{display:flex;gap:12px;margin-bottom:16px;align-items:stretch}
+.overview-left-stack{flex:0 0 65%;max-width:65%;display:flex;flex-direction:column;gap:12px}
+.overview-left-stack .heatmap-wrap{margin-bottom:0;flex:0 0 auto}
+.overview-left-stack .heatmap-wrap h4{margin-bottom:6px}
+.overview-left-stack .chart-box{flex:0 0 auto}
+.overview-left-stack .chart-box canvas{max-height:150px}
+.top-sessions-widget{flex:1;background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:16px;display:flex;flex-direction:column;min-height:0}
+.top-sessions-widget h4{font-size:.8rem;font-weight:600;color:var(--text-2);margin-bottom:10px}
+.ts-tabs{display:flex;gap:2px;background:var(--bg-2);border-radius:6px;padding:2px;margin-bottom:10px}
+.ts-tab{padding:4px 10px;border-radius:5px;border:none;background:transparent;color:var(--text-3);font-size:.72rem;font-weight:500;cursor:pointer;transition:.15s}
+.ts-tab:hover{color:var(--text-1)}
+.ts-tab.active{background:var(--bg-0);color:var(--text-1);box-shadow:0 1px 3px var(--shadow-card)}
+.ts-card{padding:8px 10px;border-radius:var(--radius);cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border-subtle)}
+.ts-card:last-child{border-bottom:none}
+.ts-card:hover{background:var(--bg-2)}
+.ts-card-title{font-size:.78rem;font-weight:500;color:var(--text-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-card-meta{font-size:.68rem;color:var(--text-3);display:flex;gap:6px;margin-top:2px}
+#tsCards{flex:1;overflow-y:auto;min-height:0}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg-4);border-radius:3px}
 
@@ -267,6 +304,10 @@ input:focus,textarea:focus{border-color:var(--accent)}
   #sidebar.open{max-height:80vh}
   .sb-header{cursor:pointer}
   .charts{grid-template-columns:1fr}
+  .charts-3{grid-template-columns:1fr}
+  .overview-top-row{flex-direction:column}
+  .overview-left-stack{max-width:100%;flex:auto}
+  .top-sessions-widget{max-width:100%}
 }
 </style>
 </head>
@@ -299,37 +340,49 @@ input:focus,textarea:focus{border-color:var(--accent)}
     </div>
 
     <div id="overview" style="display:none">
+      <div id="refreshRow" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"></div>
       <div class="cards" id="statCards"></div>
-      <div class="heatmap-wrap" id="heatmapWrap">
-        <h4>Activity (last 365 days)</h4>
-        <div class="heatmap-months" id="heatmapMonths"></div>
-        <div class="heatmap-container">
-          <div style="display:flex">
-            <div class="heatmap-labels" id="heatmapLabels"></div>
-            <div class="heatmap" id="heatmapGrid"></div>
+      <div class="overview-top-row">
+        <div class="overview-left-stack">
+          <div class="heatmap-wrap" id="heatmapWrap">
+            <h4>Activity (last 365 days)</h4>
+            <div class="heatmap-months" id="heatmapMonths"></div>
+            <div class="heatmap-container">
+              <div style="display:flex">
+                <div class="heatmap-labels" id="heatmapLabels"></div>
+                <div class="heatmap" id="heatmapGrid"></div>
+              </div>
+            </div>
+            <div class="heatmap-legend" id="heatmapLegend"></div>
           </div>
+          <div class="chart-box"><h4>Activity (last 30 days)</h4><canvas id="activityChart"></canvas></div>
         </div>
-        <div class="heatmap-legend" id="heatmapLegend"></div>
+        <div class="top-sessions-widget">
+          <h4>Top Sessions</h4>
+          <div class="ts-tabs">
+            <button class="ts-tab active" onclick="setTsTab('recent')">Recent</button>
+            <button class="ts-tab" onclick="setTsTab('active')">Most Active</button>
+            <button class="ts-tab" onclick="setTsTab('heaviest')">Heaviest</button>
+          </div>
+          <div id="tsCards"></div>
+        </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 4px">
         <span style="font-size:.8rem;color:var(--text-3)">Dashboard</span>
         <button class="btn btn-sm btn-primary" onclick="showList()">Browse Sessions →</button>
       </div>
-      <div class="charts">
-        <div class="chart-box"><h4>Activity (last 30 days)</h4><canvas id="activityChart"></canvas></div>
+      <div class="charts charts-3">
         <div class="chart-box"><h4>Model Distribution</h4><canvas id="modelChart"></canvas></div>
-      </div>
-      <div class="charts">
+        <div class="chart-box"><h4>Token Breakdown</h4><canvas id="tokenChart"></canvas></div>
         <div class="chart-box"><h4>Tier Distribution</h4><canvas id="tierChart"></canvas></div>
-        <div class="chart-box"><h4>Top Tools</h4><canvas id="toolChart"></canvas></div>
       </div>
       <div class="charts">
         <div class="chart-box"><h4>Cost Over Time</h4><canvas id="costChart"></canvas></div>
         <div class="chart-box"><h4>Cost by Project</h4><canvas id="costByProjectChart"></canvas></div>
       </div>
       <div class="charts">
+        <div class="chart-box"><h4>Top Tools</h4><canvas id="toolChart"></canvas></div>
         <div class="chart-box"><h4>Top Files</h4><canvas id="filesChart"></canvas></div>
-        <div class="chart-box" style="display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--text-3);font-size:.8rem"></div>
       </div>
     </div>
 
@@ -415,20 +468,14 @@ input:focus,textarea:focus{border-color:var(--accent)}
 <div id="toast"></div>
 
 <div id="kbHelp" onclick="this.style.display='none'">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
     <h3>Keyboard Shortcuts</h3>
-    <div class="kb-row"><span>Filter sessions</span><span><span class="kb-key">⌘</span> <span class="kb-key">K</span></span></div>
-    <div class="kb-row"><span>Global search</span><span><span class="kb-key">⌘</span> <span class="kb-key">Enter</span></span></div>
-    <div class="kb-row"><span>Go to dashboard</span><span class="kb-key">G</span></div>
-    <div class="kb-row"><span>Navigate up/down</span><span><span class="kb-key">J</span> <span class="kb-key">K</span></span></div>
-    <div class="kb-row"><span>Open session</span><span class="kb-key">Enter</span></div>
-    <div class="kb-row"><span>Go back / Close</span><span class="kb-key">Esc</span></div>
-    <div class="kb-row"><span>Search in conversation</span><span><span class="kb-key">⌘</span> <span class="kb-key">F</span></span></div>
-    <div class="kb-row"><span>Toggle favorite</span><span class="kb-key">F</span></div>
-    <div class="kb-row"><span>Trash selected</span><span class="kb-key">T</span></div>
-    <div class="kb-row"><span>Change sort</span><span class="kb-key">S</span></div>
-    <div class="kb-row"><span>Show help</span><span class="kb-key">?</span></div>
-    <div style="margin-top:12px;text-align:right"><button class="btn btn-sm" onclick="document.getElementById('kbHelp').style.display='none'">Close</button></div>
+    <div style="font-size:.68rem;color:var(--text-3);margin-bottom:8px">Click a key to rebind</div>
+    <div id="kbRows"></div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between">
+      <button class="btn btn-sm" onclick="resetKeybindings()" style="font-size:.7rem;color:var(--text-3)">Reset defaults</button>
+      <button class="btn btn-sm" onclick="document.getElementById('kbHelp').style.display='none'">Close</button>
+    </div>
   </div>
 </div>
 
@@ -475,7 +522,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 
 <script>
 // ── State ──
-let allSessions=[],stats=null,currentProject=null,currentTab='all',currentSort='date',currentPage=0,selectedIds=new Set(),focusIdx=-1;
+let allSessions=[],stats=null,currentProject=null,currentTab='all',currentSort='date',currentPage=0,selectedIds=new Set(),focusIdx=-1,lastDataRefresh=null,currentTsTab='recent';
 const PAGE=50;
 let charts={};
 const tierNames={1:'Auto-delete',2:'Suggested',3:'Review',4:'Keep'};
@@ -500,6 +547,7 @@ async function init(){
     const[sessData,projData,statsData]=await Promise.all([api('/api/sessions?limit=5000'),api('/api/projects'),api('/api/stats')]);
     allSessions=sessData.sessions||[];
     stats=statsData;
+    lastDataRefresh=new Date();
     renderProjects(projData);
     renderOverview();
     renderTabs();
@@ -546,6 +594,12 @@ function updateSidebar(){
 // ── Overview ──
 function renderOverview(){
   if(!stats)return;
+  // Refresh row
+  const rr=document.getElementById('refreshRow');
+  if(rr){
+    const ts=lastDataRefresh?lastDataRefresh.toLocaleTimeString():'—';
+    rr.innerHTML=`<span style="font-size:.75rem;color:var(--text-3)">Last updated: ${ts}</span><button class="btn btn-sm" onclick="refreshData()" style="font-size:.75rem">&#8635; Refresh</button>`;
+  }
   const td=stats.tierDistribution||{};
   const savedSize=stats.trashedSize||0;
   const canSave=stats.junkSize||0;
@@ -563,6 +617,19 @@ function renderOverview(){
     <div class="card"><div class="card-label">Avg Cost/Session</div><div class="card-value">$${(stats.avgCostPerSession||0).toFixed(3)}</div></div>
     <div class="card"><div class="card-label">Avg Messages</div><div class="card-value">${stats.avgMessagesPerSession||0}</div></div>`;
   renderCharts();
+  renderTopSessions();
+}
+async function refreshData(){
+  try{
+    const[sessData,projData,statsData]=await Promise.all([api('/api/sessions?limit=5000'),api('/api/projects'),api('/api/stats')]);
+    allSessions=sessData.sessions||[];
+    stats=statsData;
+    lastDataRefresh=new Date();
+    renderProjects(projData);
+    renderOverview();
+    updateSidebar();
+    toast('Data refreshed');
+  }catch(e){toast('Refresh failed: '+e.message,'error')}
 }
 function getChartColors(){
   const s=getComputedStyle(document.documentElement);
@@ -592,19 +659,30 @@ function renderCharts(){
   if(charts.cost)charts.cost.destroy();
   const costDays=Object.entries(stats.costByDay||{}).sort((a,b)=>a[0].localeCompare(b[0])).slice(-30);
   charts.cost=new Chart(document.getElementById('costChart'),{type:'line',data:{labels:costDays.map(d=>d[0].slice(5)),datasets:[{label:'Cost ($)',data:costDays.map(d=>+d[1].toFixed(4)),borderColor:'rgba(245,158,11,.8)',backgroundColor:'rgba(245,158,11,.1)',borderWidth:2,fill:true,tension:.3,pointRadius:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:cc.grid}}}}});
-  // Cost by project
+  // Cost by project (use stats if available, else compute client-side)
   if(charts.costByProject)charts.costByProject.destroy();
-  const projCosts={};
-  allSessions.forEach(s=>{const p=s.shortProject||'unknown';projCosts[p]=(projCosts[p]||0)+(s.estimatedCost||0)});
-  const projEntries=Object.entries(projCosts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  let cbp=stats.costByProject;
+  if(!cbp||!Object.keys(cbp).length){
+    const PRICING={default:{i:3,o:15,cr:.3,cw:3.75}};
+    cbp={};
+    allSessions.forEach(s=>{const p=s.shortProject||'unknown';const t=s.tokenUsage||{};const M=1e6;const c=((t.input||0)/M)*3+((t.output||0)/M)*15+((t.cacheRead||0)/M)*.3+((t.cacheWrite||0)/M)*3.75;cbp[p]=(cbp[p]||0)+c});
+  }
+  const projEntries=Object.entries(cbp).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const projLabels=projEntries.map(e=>{const n=e[0];return n.length>20?n.slice(0,18)+'…':n});
   const projColors=['rgba(59,130,246,.5)','rgba(34,197,94,.5)','rgba(245,158,11,.5)','rgba(239,68,68,.5)','rgba(168,85,247,.5)','rgba(236,72,153,.5)','rgba(6,182,212,.5)','rgba(132,204,22,.5)','rgba(251,146,60,.5)','rgba(167,139,250,.5)'];
-  charts.costByProject=new Chart(document.getElementById('costByProjectChart'),{type:'bar',data:{labels:projLabels,datasets:[{data:projEntries.map(e=>+e[1].toFixed(4)),backgroundColor:projColors.slice(0,projEntries.length),borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>'$'+ctx.parsed.x.toFixed(4),title:(items)=>projEntries[items[0].dataIndex]?.[0]||''}}},scales:{x:{grid:{color:cc.grid},ticks:{callback:v=>'$'+v}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  charts.costByProject=new Chart(document.getElementById('costByProjectChart'),{type:'bar',data:{labels:projLabels,datasets:[{data:projEntries.map(e=>+e[1].toFixed(2)),backgroundColor:projColors.slice(0,projEntries.length),borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>'$'+ctx.parsed.x.toFixed(2),title:(items)=>projEntries[items[0].dataIndex]?.[0]||''}}},scales:{x:{grid:{color:cc.grid},ticks:{callback:v=>'$'+v}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
   // Top files
   if(charts.files)charts.files.destroy();
   const topFiles=(stats.topFiles||[]).slice(0,8);
   const fileLabels=topFiles.map(f=>{const p=f.file;return p.length>30?'…'+p.slice(-28):p});
   charts.files=new Chart(document.getElementById('filesChart'),{type:'bar',data:{labels:fileLabels,datasets:[{data:topFiles.map(f=>f.count),backgroundColor:'rgba(6,182,212,.4)',borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{title:(items)=>topFiles[items[0].dataIndex]?.file||''}}},scales:{x:{grid:{color:cc.grid}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  // Token breakdown
+  if(charts.token)charts.token.destroy();
+  const tk=stats.tokens||{};
+  const tkData=[tk.input||0,tk.output||0,tk.cacheRead||0,tk.cacheWrite||0].map(v=>Math.round(v));
+  const tkLabels=['Input','Output','Cache Read','Cache Write'];
+  const tkColors=['#3b82f6','#22c55e','#f59e0b','#a855f7'];
+  charts.token=new Chart(document.getElementById('tokenChart'),{type:'doughnut',data:{labels:tkLabels,datasets:[{data:tkData,backgroundColor:tkColors,borderWidth:0}]},options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8,font:{size:11}}},tooltip:{callbacks:{label:(ctx)=>{const v=ctx.parsed;const t=tkData.reduce((a,b)=>a+b,0);const pct=t>0?((v/t)*100).toFixed(1)+'%':'0%';return ctx.label+': '+(v>1e6?(v/1e6).toFixed(1)+'M':(v/1e3).toFixed(0)+'K')+' ('+pct+')'}}}}}});
   // Heatmap
   renderHeatmap();
 }
@@ -785,7 +863,7 @@ function renderSingleMessage(m){
     }
   }else{content=renderMarkdown(m.content||'')}
   const tokens=m.usage?`<span class="msg-tokens">${m.usage.input}in ${m.usage.output}out</span>`:'';
-  return`<div class="msg msg-${m.type}"><div class="msg-meta"><span>${m.type==='user'?'User':'Assistant'}</span>${m.model?'<span class="model">'+esc(m.model.replace('claude-',''))+'</span>':''}${m.timestamp?'<span>'+esc(new Date(m.timestamp).toLocaleTimeString())+'</span>':''}${tokens}</div><div class="msg-content">${content}</div></div>`;
+  return`<div class="msg msg-${m.type}"><div class="msg-meta"><span>${m.type==='user'?'User':'Assistant'}</span>${m.model?'<span class="model">'+esc(m.model.replace('claude-',''))+'</span>':''}${m.timestamp?'<span>'+esc(new Date(m.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+new Date(m.timestamp).toLocaleTimeString())+'</span>':''}${tokens}</div><div class="msg-content">${content}</div></div>`;
 }
 async function loadMessages(id,offset=0){
   const ml=document.getElementById('msgList');
@@ -817,6 +895,13 @@ function goBack(){
 
 // ── Row click (selection mode vs detail) ──
 function rowClick(id,event){
+  if(selectedIds.size>0){
+    // In selection mode: toggle selection instead of opening detail
+    const was=selectedIds.has(id);
+    if(was)selectedIds.delete(id);else selectedIds.add(id);
+    renderTable();
+    return;
+  }
   showDetail(id);
 }
 
@@ -1117,22 +1202,96 @@ function doGlobalSearch(){
   showList();
 }
 
+// ── Keybinding system ──
+const DEFAULT_KEYBINDINGS={
+  filter:{label:'Filter sessions',key:'k',mod:true},
+  globalSearch:{label:'Global search',key:'Enter',mod:true},
+  dashboard:{label:'Go to dashboard',key:'g',mod:false},
+  navDown:{label:'Navigate down',key:'j',mod:false},
+  navUp:{label:'Navigate up',key:'k',mod:false},
+  openSession:{label:'Open session',key:'Enter',mod:false},
+  back:{label:'Go back / Close',key:'Escape',mod:false},
+  msgSearch:{label:'Search in conversation',key:'f',mod:true},
+  favorite:{label:'Toggle favorite',key:'f',mod:false},
+  trash:{label:'Trash selected',key:'t',mod:false},
+  sort:{label:'Change sort',key:'s',mod:false},
+  streamer:{label:'Toggle streamer mode',key:'.',mod:false},
+  help:{label:'Show help',key:'?',mod:false}
+};
+function getKeybindings(){
+  try{const s=localStorage.getItem('csesh-keybindings');if(s){const p=JSON.parse(s);return{...DEFAULT_KEYBINDINGS,...p}}}catch{}
+  return{...DEFAULT_KEYBINDINGS};
+}
+function saveKeybindings(kb){localStorage.setItem('csesh-keybindings',JSON.stringify(kb))}
+function resetKeybindings(){localStorage.removeItem('csesh-keybindings');renderKbHelp();toast('Shortcuts reset to defaults')}
+function keyLabel(binding){
+  const parts=[];
+  if(binding.mod)parts.push(navigator.platform.includes('Mac')?'⌘':'Ctrl');
+  let k=binding.key;
+  if(k==='Escape')k='Esc';
+  if(k===' ')k='Space';
+  if(k.length===1)k=k.toUpperCase();
+  parts.push(k);
+  return parts;
+}
+function renderKbHelp(){
+  const kb=getKeybindings();
+  const rows=document.getElementById('kbRows');
+  if(!rows)return;
+  rows.innerHTML=Object.entries(kb).map(([id,b])=>{
+    const keys=keyLabel(b).map(k=>`<span class="kb-key">${k}</span>`).join(' ');
+    return`<div class="kb-row"><span>${b.label}</span><span class="kb-edit" data-action="${id}" onclick="startRebind('${id}')" title="Click to rebind">${keys}</span></div>`;
+  }).join('');
+}
+let rebindingAction=null;
+function startRebind(action){
+  if(rebindingAction)cancelRebind();
+  rebindingAction=action;
+  const el=document.querySelector(`.kb-edit[data-action="${action}"]`);
+  if(el){el.classList.add('recording');el.innerHTML='<span class="kb-key" style="color:var(--accent)">Press a key...</span>'}
+  document.addEventListener('keydown',captureRebind,true);
+}
+function captureRebind(e){
+  e.preventDefault();e.stopImmediatePropagation();
+  if(e.key==='Escape'){cancelRebind();return}
+  // Ignore bare modifier keys
+  if(['Shift','Control','Alt','Meta'].includes(e.key))return;
+  const kb=getKeybindings();
+  kb[rebindingAction]={...kb[rebindingAction],key:e.key,mod:e.metaKey||e.ctrlKey};
+  saveKeybindings(kb);
+  document.removeEventListener('keydown',captureRebind,true);
+  rebindingAction=null;
+  renderKbHelp();
+  toast('Shortcut updated');
+}
+function cancelRebind(){
+  document.removeEventListener('keydown',captureRebind,true);
+  rebindingAction=null;
+  renderKbHelp();
+}
+function matchesBinding(e,actionId){
+  const kb=getKeybindings();
+  const b=kb[actionId];
+  if(!b)return false;
+  if(b.mod&&!(e.metaKey||e.ctrlKey))return false;
+  if(!b.mod&&(e.metaKey||e.ctrlKey))return false;
+  return e.key===b.key||e.key===b.key.toUpperCase()||e.key===b.key.toLowerCase();
+}
+
 // ── Cmd+F capture (must be in capture phase to beat the browser) ──
 document.addEventListener('keydown',e=>{
-  if((e.key==='f'||e.key==='F')&&(e.metaKey||e.ctrlKey)&&document.getElementById('detail').style.display!=='none'){e.preventDefault();e.stopImmediatePropagation();toggleMsgSearch()}
+  if(matchesBinding(e,'msgSearch')&&document.getElementById('detail').style.display!=='none'){e.preventDefault();e.stopImmediatePropagation();toggleMsgSearch()}
 },true);
 
 // ── Keyboard shortcuts ──
 document.addEventListener('keydown',e=>{
-  // Cmd+K / Ctrl+K — focus filter (works from anywhere, including inputs)
-  if((e.key==='k'||e.key==='K')&&(e.metaKey||e.ctrlKey)){e.preventDefault();e.stopPropagation();const lv=document.getElementById('listView');if(!lv||lv.style.display==='none'){showList()}setTimeout(()=>{const inp=document.getElementById('filterInput');if(inp){inp.focus();inp.select()}},60);return}
-  // Cmd+Enter / Ctrl+Enter — trigger sidebar search (works from anywhere)
-  if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();e.stopPropagation();const gs=document.getElementById('globalSearch');if(gs){gs.focus();if(gs.value)doGlobalSearch()}else{showList()}return}
+  // Modifier-based shortcuts (work from anywhere, including inputs)
+  if(matchesBinding(e,'filter')){e.preventDefault();e.stopPropagation();const lv=document.getElementById('listView');if(!lv||lv.style.display==='none'){showList()}setTimeout(()=>{const inp=document.getElementById('filterInput');if(inp){inp.focus();inp.select()}},60);return}
+  if(matchesBinding(e,'globalSearch')){e.preventDefault();e.stopPropagation();const gs=document.getElementById('globalSearch');if(gs){gs.focus();if(gs.value)doGlobalSearch()}else{showList()}return}
   // Escape — close search bar, modals, or go back (works from inputs too)
-  if(e.key==='Escape'){
+  if(matchesBinding(e,'back')){
     document.getElementById('kbHelp').style.display='none';
     document.getElementById('infoModal').style.display='none';
-    // If message search is open, close it first
     if(document.getElementById('msgSearchBar')?.style.display!=='none'&&document.getElementById('detail').style.display!=='none'){closeMsgSearch();return}
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){e.target.blur();return}
     if(document.getElementById('detail').style.display!=='none')goBack();
@@ -1141,14 +1300,15 @@ document.addEventListener('keydown',e=>{
   // Skip remaining shortcuts if typing in a form field
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
   const listVisible=document.getElementById('listView').style.display!=='none';
-  if(e.key==='g'&&!e.metaKey&&!e.ctrlKey){e.preventDefault();showOverview()}
-  else if(e.key==='?'){e.preventDefault();document.getElementById('kbHelp').style.display='flex'}
-  else if(e.key==='j'&&listVisible){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.min(focusIdx+1,getFiltered().length-1);highlightRow()}
-  else if(e.key==='k'&&listVisible&&!e.metaKey&&!e.ctrlKey){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.max(focusIdx-1,0);highlightRow()}
-  else if(e.key==='Enter'&&listVisible&&focusIdx>=0){const f=getFiltered();if(f[focusIdx])showDetail(f[focusIdx].id)}
-  else if(e.key==='f'&&listVisible&&focusIdx>=0){const f=getFiltered();if(f[focusIdx]){const sid=f[focusIdx].id;apiPost(`/api/sessions/${sid}/favorite`).then(r=>{const s=allSessions.find(x=>x.id===sid);if(s)s.favorite=r.favorite;renderTable();toast(r.favorite?'Added to favorites':'Removed from favorites')})}}
-  else if(e.key==='t'&&listVisible){if(selectedIds.size>0)batchTrash()}
-  else if(e.key==='s'&&listVisible){e.preventDefault();document.getElementById('sortSelect')?.focus()}
+  if(matchesBinding(e,'dashboard')){e.preventDefault();showOverview()}
+  else if(matchesBinding(e,'help')){e.preventDefault();renderKbHelp();document.getElementById('kbHelp').style.display='flex'}
+  else if(matchesBinding(e,'streamer')){e.preventDefault();toggleStreamer()}
+  else if(matchesBinding(e,'navDown')&&listVisible){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.min(focusIdx+1,getFiltered().length-1);highlightRow()}
+  else if(matchesBinding(e,'navUp')&&listVisible&&!e.metaKey&&!e.ctrlKey){e.preventDefault();if(focusIdx<0)focusIdx=0;else focusIdx=Math.max(focusIdx-1,0);highlightRow()}
+  else if(matchesBinding(e,'openSession')&&listVisible&&focusIdx>=0){const f=getFiltered();if(f[focusIdx])showDetail(f[focusIdx].id)}
+  else if(matchesBinding(e,'favorite')&&listVisible&&focusIdx>=0){const f=getFiltered();if(f[focusIdx]){const sid=f[focusIdx].id;apiPost(`/api/sessions/${sid}/favorite`).then(r=>{const s=allSessions.find(x=>x.id===sid);if(s)s.favorite=r.favorite;renderTable();toast(r.favorite?'Added to favorites':'Removed from favorites')})}}
+  else if(matchesBinding(e,'trash')&&listVisible){if(selectedIds.size>0)batchTrash()}
+  else if(matchesBinding(e,'sort')&&listVisible){e.preventDefault();document.getElementById('sortSelect')?.focus()}
 });
 function highlightRow(){
   const localIdx=focusIdx-currentPage*PAGE;
@@ -1305,6 +1465,41 @@ function renderHeatmap(){
   }
 }
 
+// ── Top Sessions widget ──
+function setTsTab(tab){
+  currentTsTab=tab;
+  document.querySelectorAll('.ts-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab==='active'?'active':tab==='heaviest'?'heaviest':'recent')));
+  renderTopSessions();
+}
+function renderTopSessions(){
+  const container=document.getElementById('tsCards');
+  if(!container||!allSessions.length)return;
+  let sorted=[...allSessions];
+  let metaFn;
+  if(currentTsTab==='active'){
+    sorted.sort((a,b)=>(b.userMessageCount+b.assistantMessageCount)-(a.userMessageCount+a.assistantMessageCount));
+    metaFn=s=>`${s.userMessageCount+s.assistantMessageCount} messages`;
+  }else if(currentTsTab==='heaviest'){
+    sorted.sort((a,b)=>(b.fileSizeBytes||0)-(a.fileSizeBytes||0));
+    metaFn=s=>fmtBytes(s.fileSizeBytes||0);
+  }else{
+    sorted.sort((a,b)=>{if(!a.lastTimestamp)return 1;if(!b.lastTimestamp)return-1;return new Date(b.lastTimestamp)-new Date(a.lastTimestamp)});
+    metaFn=s=>s.lastTimestamp?new Date(s.lastTimestamp).toLocaleDateString('en-CA'):'—';
+  }
+  const top5=sorted.slice(0,6);
+  container.innerHTML=top5.map(s=>{
+    const title=esc((s.displayTitle||s.title||'Untitled').slice(0,40));
+    const proj=esc((s.shortProject||'').slice(0,20));
+    const metric=metaFn(s);
+    return`<div class="ts-card" onclick="showDetail('${s.id}')"><div class="ts-card-title">${title}</div><div class="ts-card-meta"><span>${proj}</span><span>&middot;</span><span>${metric}</span></div></div>`;
+  }).join('')||'<div style="color:var(--text-3);font-size:.78rem;padding:8px">No sessions</div>';
+  // Update tab active states
+  document.querySelectorAll('.ts-tab').forEach(b=>{
+    const text=b.textContent.toLowerCase();
+    b.classList.toggle('active',(currentTsTab==='recent'&&text==='recent')||(currentTsTab==='active'&&text.includes('active'))||(currentTsTab==='heaviest'&&text==='heaviest'));
+  });
+}
+
 // ── Theme toggle ──
 const themeStates=['auto','light','dark'];
 let currentThemeIdx=0;
@@ -1345,6 +1540,7 @@ window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=
 });
 // Apply theme immediately
 applyTheme();
+renderKbHelp();
 
 init();
 </script>

@@ -457,6 +457,30 @@ describe('computeStats — empty input', () => {
   });
 });
 
+// ── Cost by project ─────────────────────────────────────────────────
+
+describe('computeStats — cost by project', () => {
+  it('should aggregate cost per project', () => {
+    const sessions = [
+      makeSession({ shortProject: 'alpha', tokenUsage: { input: 1000000, output: 0, cacheRead: 0, cacheWrite: 0 }, models: ['claude-sonnet-4-6'] }),
+      makeSession({ shortProject: 'alpha', tokenUsage: { input: 1000000, output: 0, cacheRead: 0, cacheWrite: 0 }, models: ['claude-sonnet-4-6'] }),
+      makeSession({ shortProject: 'beta', tokenUsage: { input: 1000000, output: 0, cacheRead: 0, cacheWrite: 0 }, models: ['claude-sonnet-4-6'] }),
+    ];
+    const stats = computeStats(sessions);
+    // Sonnet input = $3/1M tokens → 1M tokens = $3
+    assert.equal(stats.costByProject.alpha, 6);
+    assert.equal(stats.costByProject.beta, 3);
+  });
+
+  it('should use unknown for sessions without project', () => {
+    const sessions = [
+      makeSession({ shortProject: undefined }),
+    ];
+    const stats = computeStats(sessions);
+    assert.ok(stats.costByProject.unknown !== undefined);
+  });
+});
+
 // ── Language distribution ────────────────────────────────────────────
 
 describe('computeStats — language distribution', () => {
