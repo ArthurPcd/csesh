@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/dependencies-0-22c55e" alt="zero dependencies" />
   <img src="https://img.shields.io/npm/dm/@arthurpcd/csesh.svg?color=%2322c55e" alt="downloads" />
   <img src="https://img.shields.io/badge/tests-233%20passing-22c55e" alt="tests" />
-  <img src="https://img.shields.io/badge/version-4.0.0-22c55e" alt="version" />
+  <img src="https://img.shields.io/badge/version-4.1.0-22c55e" alt="version" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.3-22c55e" alt="node" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="license" />
 </p>
@@ -86,7 +86,7 @@ The dashboard opens at `http://localhost:3456`.
 
 ---
 
-## What's new in v4.0.0
+## What's new in v4.1.0
 
 - **Wider activity heatmap** — 70/30 split gives the heatmap more room to breathe
 - **Stacked top section** — heatmap (365d) + activity (30d) on the left, Top Sessions on the right, same height
@@ -232,7 +232,7 @@ Nothing is ever deleted directly. Everything goes to trash with a manifest. Rest
 
 ```
 $ npm ls
-@arthurpcd/csesh@4.0.0
+@arthurpcd/csesh@4.1.0
 └── (empty)
 ```
 
