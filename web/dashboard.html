@@ -728,16 +728,16 @@ async function showDetail(id){
     <div class="launch-section" style="margin:16px 0;padding:16px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border)">
       <div style="font-weight:600;margin-bottom:10px;font-size:.9rem">Resume in Terminal</div>
       <div class="launch-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <code class="launch-cmd" style="flex:1;padding:8px 12px;background:var(--bg-1);border-radius:6px;font-size:.8rem;font-family:var(--mono);overflow-x:auto;white-space:nowrap">claude --resume ${s.id}</code>
-        <button class="btn btn-sm" onclick="copyCmd('claude --resume ${s.id}',this)" title="Copy">Copy</button>
-        <button class="btn btn-sm btn-icon" onclick="openTerm('claude --resume ${s.id}')" title="Open in terminal"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2 4 6 8 2 12"/><line x1="8" y1="12" x2="14" y2="12"/></svg></button>
+        <code class="launch-cmd" style="flex:1;padding:8px 12px;background:var(--bg-1);border-radius:6px;font-size:.8rem;font-family:var(--mono);overflow-x:auto;white-space:nowrap">cd ${esc(s.cwd||s.project||'~')} && claude --resume ${s.id}</code>
+        <button class="btn btn-sm" onclick="copyCmd('cd ${(s.cwd||s.project||'~').replace(/'/g,"\\'")} && claude --resume ${s.id}',this)" title="Copy">Copy</button>
+        <button class="btn btn-sm btn-icon" onclick="openTerm('cd ${(s.cwd||s.project||'~').replace(/'/g,"\\'")} && claude --resume ${s.id}')" title="Open in terminal"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2 4 6 8 2 12"/><line x1="8" y1="12" x2="14" y2="12"/></svg></button>
       </div>
       <div class="launch-row" style="display:flex;align-items:center;gap:8px">
-        <code class="launch-cmd" style="flex:1;padding:8px 12px;background:var(--bg-1);border-radius:6px;font-size:.8rem;font-family:var(--mono);overflow-x:auto;white-space:nowrap;opacity:.7">claude --resume ${s.id} --dangerously-skip-permissions</code>
-        <button class="btn btn-sm" onclick="copyCmd('claude --resume ${s.id} --dangerously-skip-permissions',this)" title="Copy" style="opacity:.7">Copy</button>
-        <button class="btn btn-sm btn-icon" onclick="openTerm('claude --resume ${s.id} --dangerously-skip-permissions')" title="Open in terminal" style="opacity:.7"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2 4 6 8 2 12"/><line x1="8" y1="12" x2="14" y2="12"/></svg></button>
+        <code class="launch-cmd" style="flex:1;padding:8px 12px;background:var(--bg-1);border-radius:6px;font-size:.8rem;font-family:var(--mono);overflow-x:auto;white-space:nowrap;opacity:.7">cd ${esc(s.cwd||s.project||'~')} && claude --resume ${s.id} --dangerously-skip-permissions</code>
+        <button class="btn btn-sm" onclick="copyCmd('cd ${(s.cwd||s.project||'~').replace(/'/g,"\\'")} && claude --resume ${s.id} --dangerously-skip-permissions',this)" title="Copy" style="opacity:.7">Copy</button>
+        <button class="btn btn-sm btn-icon" onclick="openTerm('cd ${(s.cwd||s.project||'~').replace(/'/g,"\\'")} && claude --resume ${s.id} --dangerously-skip-permissions')" title="Open in terminal" style="opacity:.7"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2 4 6 8 2 12"/><line x1="8" y1="12" x2="14" y2="12"/></svg></button>
       </div>
-      <div style="font-size:.7rem;color:var(--text-3);margin-top:6px">Copy or click <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><polyline points="2 4 6 8 2 12"/><line x1="8" y1="12" x2="14" y2="12"/></svg> to open in your default terminal.</div>
+      <div style="font-size:.7rem;color:var(--text-3);margin-top:6px">Copy or click <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><polyline points="2 4 6 8 2 12"/><line x1="8" y1="12" x2="14" y2="12"/></svg> to open in your default terminal. The renamed title appears in the <code style="font-size:.65rem">claude --resume</code> picker.</div>
     </div>`;
   loadMessages(id);
 }

@@ -1120,11 +1120,16 @@ program
 
     const selected = filtered[idx];
     console.log(chalk.green(`  \u2713 Resuming: ${selected.displayTitle || selected.title}`));
+    const resumeDir = selected.cwd || selected.project;
+    if (resumeDir) console.log(chalk.dim(`  in ${resumeDir}`));
     console.log();
 
     const { execFileSync } = await import('child_process');
     try {
-      execFileSync('claude', ['--resume', selected.id], { stdio: 'inherit' });
+      execFileSync('claude', ['--resume', selected.id], {
+        stdio: 'inherit',
+        cwd: resumeDir || undefined,
+      });
     } catch {
       // claude exits with non-zero on user interrupt, that's fine
     }
@@ -1133,23 +1138,90 @@ program
 // ── RENAME ───────────────────────────────────────────────────────────────────
 
 program.command('rename')
-  .description('Rename a session (updates claude --resume slug)')
-  .argument('<id>', 'Session ID or prefix')
-  .argument('<title...>', 'New title')
-  .action(async (id, titleWords) => {
-    const title = titleWords.join(' ');
+  .description('Rename a session (updates title in claude --resume picker)')
+  .argument('[id]', 'Session ID or prefix (shows picker if omitted)')
+  .argument('[title...]', 'New title (prompts if omitted)')
+  .option('-p, --project <name>', 'Filter by project')
+  .option('-n, --limit <n>', 'Number of sessions to show', parseInt, 20)
+  .action(async (id, titleWords, opts) => {
+    let sessionId = id;
+    let title = titleWords && titleWords.length > 0 ? titleWords.join(' ') : null;
+
+    // If no ID provided, show interactive picker
+    if (!sessionId) {
+      const sessions = await loadSessions({ project: opts.project });
+      const { sessions: filtered } = filterSessions(sessions, {
+        project: opts.project,
+        sort: 'date',
+        limit: opts.limit,
+      });
+      if (filtered.length === 0) {
+        console.log(chalk.yellow('  No sessions found'));
+        return;
+      }
+      console.log(`\n  ${BRAND} ${chalk.bold('csesh rename')}\n`);
+      for (let i = 0; i < filtered.length; i++) {
+        const s = filtered[i];
+        const num = String(i + 1).padStart(3);
+        const fav = s.favorite ? chalk.yellow('\u2605') : ' ';
+        const badge = tierBadge(s.tier);
+        const t = (s.displayTitle || s.title).slice(0, 50);
+        const date = s.lastTimestamp?.slice(0, 10) || '';
+        console.log(`  ${chalk.dim(num)}  ${fav} ${badge}  ${t}`);
+        console.log(`       ${chalk.dim(s.shortProject)} ${chalk.dim('\u00b7')} ${chalk.dim(date)}`);
+      }
+      console.log();
+      const readline = await import('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await new Promise(resolve => {
+        rl.question(chalk.cyan(`  Select session (1-${filtered.length}): `), resolve);
+      });
+      const idx = parseInt(answer) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= filtered.length) {
+        rl.close();
+        console.log(chalk.red('  \u2717 Invalid selection'));
+        process.exit(1);
+      }
+      sessionId = filtered[idx].id;
+      console.log(chalk.dim(`  Selected: ${filtered[idx].displayTitle || filtered[idx].title}`));
+
+      // Prompt for title if not provided
+      if (!title) {
+        title = await new Promise(resolve => {
+          rl.question(chalk.cyan('  New title: '), resolve);
+        });
+      }
+      rl.close();
+      if (!title || !title.trim()) {
+        console.log(chalk.red('  \u2717 Title cannot be empty'));
+        process.exit(1);
+      }
+    }
+
+    // Prompt for title via readline if ID was given but no title
+    if (!title) {
+      const readline = await import('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      title = await new Promise(resolve => {
+        rl.question(chalk.cyan('  New title: '), resolve);
+      });
+      rl.close();
+      if (!title || !title.trim()) {
+        console.log(chalk.red('  \u2717 Title cannot be empty'));
+        process.exit(1);
+      }
+    }
+
     const slug = titleToSlug(title);
-    console.log(chalk.dim(`  Renaming to slug: ${slug}`));
+    console.log(chalk.dim(`  Renaming to: ${title}`));
     try {
-      const result = await renameSessionSlug(id, title);
-      // Also update csesh metadata
-      await metaSetTitle(result.filePath.match(/([a-f0-9-]{36})\.jsonl/)?.[1] || id, title);
+      const result = await renameSessionSlug(sessionId, title);
+      await metaSetTitle(result.filePath.match(/([a-f0-9-]{36})\.jsonl/)?.[1] || sessionId, title);
       console.log(chalk.green(`  ${BRAND} Renamed successfully`));
       console.log(chalk.dim(`  ${result.originalSlug} → ${result.newSlug}`));
       console.log(chalk.dim(`  ${result.linesModified} records updated`));
-      console.log(chalk.dim(`  Backup: ${result.backupPath}`));
       console.log();
-      console.log(`  Now visible in ${chalk.bold('claude --resume')} as ${chalk.cyan(result.newSlug)}`);
+      console.log(`  Title will appear in ${chalk.bold('claude --resume')} picker as ${chalk.cyan(title)}`);
     } catch (err) {
       console.error(chalk.red(`  Error: ${err.message}`));
       process.exitCode = 1;

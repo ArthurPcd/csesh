@@ -462,18 +462,22 @@ async function handleRequest(req, res) {
     if (path === '/api/open-terminal' && method === 'POST') {
       const body = await readBody(req);
       if (!body.cmd || typeof body.cmd !== 'string') return send({ error: 'Missing cmd' }, 400);
-      // Validate: only allow claude --resume commands
-      if (!/^claude --resume [a-f0-9-]+( --dangerously-skip-permissions)?$/.test(body.cmd)) {
+      // Validate: only allow [cd <path> &&] claude --resume commands
+      const cmdPattern = /^(cd [^\n;&|`$()]+? && )?claude --resume [a-f0-9-]+( --dangerously-skip-permissions)?$/;
+      if (!cmdPattern.test(body.cmd)) {
         return send({ error: 'Invalid command' }, 400);
       }
-      const { exec } = await import('child_process');
+      const { execFile } = await import('child_process');
       const platform = process.platform;
       if (platform === 'darwin') {
-        exec(`osascript -e 'tell application "Terminal" to do script "${body.cmd}"' -e 'tell application "Terminal" to activate'`);
+        execFile('osascript', [
+          '-e', `tell application "Terminal" to do script "${body.cmd.replace(/"/g, '\\"')}"`,
+          '-e', 'tell application "Terminal" to activate'
+        ]);
       } else if (platform === 'linux') {
-        exec(`x-terminal-emulator -e bash -c '${body.cmd}; exec bash' &`);
+        execFile('x-terminal-emulator', ['-e', 'bash', '-c', `${body.cmd}; exec bash`]);
       } else {
-        exec(`start cmd /k "${body.cmd}"`);
+        execFile('cmd', ['/k', body.cmd]);
       }
       send({ ok: true });
       return;
