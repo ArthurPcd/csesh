@@ -1,6 +1,6 @@
 {
   "name": "@arthurpcd/csesh",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Navigate, search, analyze, and clean up Claude Code sessions",
   "license": "Apache-2.0",
   "author": "Arthur Pacaud <arthurpacaud04@gmail.com> (https://jpstudio.fr)",
