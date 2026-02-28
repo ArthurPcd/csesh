@@ -1117,10 +1117,13 @@ function doGlobalSearch(){
   showList();
 }
 
+// ── Cmd+F capture (must be in capture phase to beat the browser) ──
+document.addEventListener('keydown',e=>{
+  if((e.key==='f'||e.key==='F')&&(e.metaKey||e.ctrlKey)&&document.getElementById('detail').style.display!=='none'){e.preventDefault();e.stopImmediatePropagation();toggleMsgSearch()}
+},true);
+
 // ── Keyboard shortcuts ──
 document.addEventListener('keydown',e=>{
-  // Cmd+F / Ctrl+F — open message search when detail view is visible
-  if((e.key==='f'||e.key==='F')&&(e.metaKey||e.ctrlKey)&&document.getElementById('detail').style.display!=='none'){e.preventDefault();e.stopPropagation();toggleMsgSearch();return}
   // Cmd+K / Ctrl+K — focus filter (works from anywhere, including inputs)
   if((e.key==='k'||e.key==='K')&&(e.metaKey||e.ctrlKey)){e.preventDefault();e.stopPropagation();const lv=document.getElementById('listView');if(!lv||lv.style.display==='none'){showList()}setTimeout(()=>{const inp=document.getElementById('filterInput');if(inp){inp.focus();inp.select()}},60);return}
   // Cmd+Enter / Ctrl+Enter — trigger sidebar search (works from anywhere)
