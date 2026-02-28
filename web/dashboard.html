@@ -196,6 +196,18 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .tool-error{color:var(--red)}
 .msg-tokens{font-size:.65rem;color:var(--text-3);font-family:var(--mono)}
 
+/* Message search */
+.msg-search{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg-1);border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
+.msg-search input{flex:1;padding:6px 10px;background:var(--bg-2);color:var(--text-1);border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;outline:none}
+.msg-search input:focus{border-color:var(--accent)}
+.msg-search-info{font-size:.72rem;color:var(--text-3);font-family:var(--mono);white-space:nowrap;min-width:50px;text-align:center}
+.msg-search button{background:none;border:1px solid var(--border);color:var(--text-2);cursor:pointer;padding:3px 8px;border-radius:var(--radius);font-size:.75rem;transition:.15s}
+.msg-search button:hover{color:var(--text-1);border-color:var(--text-3);background:var(--bg-3)}
+.search-hl{background:var(--yellow-bg);color:var(--yellow);border-radius:2px;padding:0 1px}
+.search-hl-active{background:var(--yellow);color:var(--bg-0);border-radius:2px;padding:0 1px}
+.msg-dimmed{opacity:.2;pointer-events:none}
+.msg-hidden{display:none}
+
 /* Toast */
 #toast{position:fixed;bottom:24px;right:24px;z-index:200}
 .toast-item{background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-top:8px;font-size:.82rem;box-shadow:0 4px 20px var(--shadow-card);animation:slideUp .2s ease;display:flex;align-items:center;gap:8px}
@@ -359,7 +371,18 @@ input:focus,textarea:focus{border-color:var(--accent)}
         <button class="btn btn-sm" onclick="goBack()">← Back</button>
       </div>
       <div id="detailInner"></div>
-      <h3 style="margin:20px 0 8px;font-size:.95rem">Conversation</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px">
+        <h3 style="font-size:.95rem">Conversation</h3>
+        <button class="btn btn-sm" onclick="toggleMsgSearch()" title="Search in conversation (Ctrl+F)">Search</button>
+      </div>
+      <div class="msg-search" id="msgSearchBar" style="display:none">
+        <input type="text" id="msgSearchInput" placeholder="Search in conversation..." oninput="debounceMsgSearch()" onkeydown="msgSearchKeydown(event)">
+        <span class="msg-search-info" id="msgSearchInfo"></span>
+        <button onclick="msgSearchPrev()" title="Previous match (Shift+Enter)">&#9650;</button>
+        <button onclick="msgSearchNext()" title="Next match (Enter)">&#9660;</button>
+        <button id="msgSearchModeBtn" onclick="toggleMsgSearchMode()" title="Toggle display mode">All</button>
+        <button onclick="closeMsgSearch()" title="Close search (Esc)">&times;</button>
+      </div>
       <div class="msg-list" id="msgList"></div>
       <div id="msgPag" class="pag"></div>
     </div>
@@ -397,6 +420,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
     <div class="kb-row"><span>Navigate up/down</span><span><span class="kb-key">J</span> <span class="kb-key">K</span></span></div>
     <div class="kb-row"><span>Open session</span><span class="kb-key">Enter</span></div>
     <div class="kb-row"><span>Go back / Close</span><span class="kb-key">Esc</span></div>
+    <div class="kb-row"><span>Search in conversation</span><span><span class="kb-key">⌘</span> <span class="kb-key">F</span></span></div>
     <div class="kb-row"><span>Toggle favorite</span><span class="kb-key">F</span></div>
     <div class="kb-row"><span>Trash selected</span><span class="kb-key">T</span></div>
     <div class="kb-row"><span>Change sort</span><span class="kb-key">S</span></div>
@@ -678,8 +702,13 @@ function batchTag(){
 
 // ── Detail ──
 let currentDetailId=null,msgOffset=0,previousView='listView';
+let allDetailMessages=[],allMessagesLoaded=false,searchMatches=[],currentMatchIdx=-1,msgSearchMode='all',msgSearchTimer=null;
 async function showDetail(id){
   currentDetailId=id;msgOffset=0;
+  allDetailMessages=[];allMessagesLoaded=false;searchMatches=[];currentMatchIdx=-1;msgSearchMode='all';
+  const sb=document.getElementById('msgSearchBar');if(sb)sb.style.display='none';
+  const mi=document.getElementById('msgSearchInput');if(mi)mi.value='';
+  const mb=document.getElementById('msgSearchModeBtn');if(mb)mb.textContent='All';
   // Track which view we came from
   if(document.getElementById('trashView').style.display!=='none')previousView='trashView';
   else if(document.getElementById('overview').style.display!=='none')previousView='overview';
@@ -741,23 +770,25 @@ async function showDetail(id){
     </div>`;
   loadMessages(id);
 }
+function renderSingleMessage(m){
+  let content='';
+  if(m.blocks?.length){
+    for(const b of m.blocks){
+      if(b.type==='text'){content+=renderMarkdown(b.text)}
+      else if(b.type==='thinking'){const id='th_'+Math.random().toString(36).slice(2);content+=`<div class="thinking-toggle" onclick="const c=document.getElementById('${id}');c.style.display=c.style.display==='block'?'none':'block'">💭 Thinking (${b.chars.toLocaleString()} chars)</div><div class="thinking-content" id="${id}">${esc(b.text)}</div>`}
+      else if(b.type==='tool_use'){content+=`<div class="tool-block"><span class="tool-name">${esc(b.name)}</span><div class="tool-input">${esc(b.input||'')}</div></div>`}
+      else if(b.type==='tool_result'){content+=`<div class="tool-block${b.isError?' tool-error':''}"><span class="tool-name">${b.isError?'Error':'Result'}</span><div class="tool-input">${esc((b.content||'').slice(0,500))}</div></div>`}
+    }
+  }else{content=renderMarkdown(m.content||'')}
+  const tokens=m.usage?`<span class="msg-tokens">${m.usage.input}in ${m.usage.output}out</span>`:'';
+  return`<div class="msg msg-${m.type}"><div class="msg-meta"><span>${m.type==='user'?'User':'Assistant'}</span>${m.model?'<span class="model">'+esc(m.model.replace('claude-',''))+'</span>':''}${m.timestamp?'<span>'+esc(new Date(m.timestamp).toLocaleTimeString())+'</span>':''}${tokens}</div><div class="msg-content">${content}</div></div>`;
+}
 async function loadMessages(id,offset=0){
   const ml=document.getElementById('msgList');
   if(offset===0)ml.innerHTML='<div style="color:var(--text-3);padding:16px">Loading messages...</div>';
   const data=await api(`/api/sessions/${id}/messages?offset=${offset}&limit=100`);
   if(!data.messages?.length&&offset===0){ml.innerHTML='<div style="color:var(--text-3);padding:16px">No messages</div>';return}
-  const html=data.messages.map(m=>{
-    let content='';
-    if(m.blocks?.length){
-      for(const b of m.blocks){
-        if(b.type==='text'){content+=renderMarkdown(b.text)}
-        else if(b.type==='thinking'){const id='th_'+Math.random().toString(36).slice(2);content+=`<div class="thinking-toggle" onclick="const c=document.getElementById('${id}');c.style.display=c.style.display==='block'?'none':'block'">💭 Thinking (${b.chars.toLocaleString()} chars)</div><div class="thinking-content" id="${id}">${esc(b.text)}</div>`}
-        else if(b.type==='tool_use'){content+=`<div class="tool-block"><span class="tool-name">${esc(b.name)}</span><div class="tool-input">${esc(b.input||'')}</div></div>`}
-        else if(b.type==='tool_result'){content+=`<div class="tool-block${b.isError?' tool-error':''}"><span class="tool-name">${b.isError?'Error':'Result'}</span><div class="tool-input">${esc((b.content||'').slice(0,500))}</div></div>`}
-      }
-    }else{content=renderMarkdown(m.content||'')}
-    const tokens=m.usage?`<span class="msg-tokens">${m.usage.input}in ${m.usage.output}out</span>`:'';
-    return`<div class="msg msg-${m.type}"><div class="msg-meta"><span>${m.type==='user'?'User':'Assistant'}</span>${m.model?'<span class="model">'+esc(m.model.replace('claude-',''))+'</span>':''}${m.timestamp?'<span>'+esc(new Date(m.timestamp).toLocaleTimeString())+'</span>':''}${tokens}</div><div class="msg-content">${content}</div></div>`}).join('');
+  const html=data.messages.map(m=>renderSingleMessage(m)).join('');
   if(offset===0)ml.innerHTML=html;else ml.insertAdjacentHTML('beforeend',html);
   // Load more
   const mp=document.getElementById('msgPag');
@@ -908,6 +939,148 @@ async function deleteOne(id){
   showTrash();toast('Session permanently deleted');
 }
 
+// ── In-conversation message search ──
+function toggleMsgSearch(){
+  const bar=document.getElementById('msgSearchBar');
+  if(bar.style.display==='none'){bar.style.display='flex';const inp=document.getElementById('msgSearchInput');inp.focus();inp.select()}
+  else closeMsgSearch();
+}
+function closeMsgSearch(){
+  document.getElementById('msgSearchBar').style.display='none';
+  document.getElementById('msgSearchInput').value='';
+  document.getElementById('msgSearchInfo').textContent='';
+  clearMsgHighlights();
+  // Remove dim/hidden classes
+  document.querySelectorAll('#msgList .msg').forEach(el=>{el.classList.remove('msg-dimmed','msg-hidden')});
+  searchMatches=[];currentMatchIdx=-1;
+}
+async function ensureAllMessagesLoaded(){
+  if(allMessagesLoaded||!currentDetailId)return;
+  const ml=document.getElementById('msgList');
+  // First fetch to get total
+  const first=await api(`/api/sessions/${currentDetailId}/messages?offset=0&limit=100`);
+  allDetailMessages=first.messages||[];
+  const total=first.total||allDetailMessages.length;
+  if(total>100){
+    // Fetch remaining in parallel batches
+    const fetches=[];
+    for(let off=100;off<total;off+=100){
+      fetches.push(api(`/api/sessions/${currentDetailId}/messages?offset=${off}&limit=100`));
+    }
+    const results=await Promise.all(fetches);
+    for(const r of results){allDetailMessages=allDetailMessages.concat(r.messages||[])}
+  }
+  allMessagesLoaded=true;
+  // Re-render all messages
+  ml.innerHTML=allDetailMessages.map(m=>renderSingleMessage(m)).join('');
+  document.getElementById('msgPag').innerHTML='';
+}
+function debounceMsgSearch(){
+  clearTimeout(msgSearchTimer);
+  msgSearchTimer=setTimeout(()=>executeMsgSearch(),200);
+}
+async function executeMsgSearch(){
+  const query=document.getElementById('msgSearchInput').value.trim();
+  const info=document.getElementById('msgSearchInfo');
+  if(!query){clearMsgHighlights();info.textContent='';document.querySelectorAll('#msgList .msg').forEach(el=>{el.classList.remove('msg-dimmed','msg-hidden')});searchMatches=[];currentMatchIdx=-1;return}
+  // Ensure all messages are loaded
+  await ensureAllMessagesLoaded();
+  // Clear previous highlights
+  clearMsgHighlights();
+  // Walk DOM and highlight matches
+  searchMatches=[];
+  const msgEls=document.querySelectorAll('#msgList .msg');
+  msgEls.forEach(msgEl=>{
+    const contentEl=msgEl.querySelector('.msg-content');
+    if(!contentEl)return;
+    const found=highlightTextNodes(contentEl,query);
+    if(found){msgEl.classList.remove('msg-dimmed','msg-hidden')}
+    else{
+      if(msgSearchMode==='matches')msgEl.classList.add('msg-hidden');
+      else msgEl.classList.add('msg-dimmed');
+      msgEl.classList.remove(msgSearchMode==='matches'?'msg-dimmed':'msg-hidden');
+    }
+  });
+  // Collect all marks
+  searchMatches=Array.from(document.querySelectorAll('#msgList .search-hl'));
+  if(searchMatches.length>0){currentMatchIdx=0;activateMatch();info.textContent=`1 / ${searchMatches.length}`}
+  else{currentMatchIdx=-1;info.textContent='0 results'}
+}
+function highlightTextNodes(root,query){
+  const lowerQ=query.toLowerCase();
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
+  const textNodes=[];
+  while(walker.nextNode())textNodes.push(walker.currentNode);
+  let found=false;
+  for(const node of textNodes){
+    const text=node.textContent;
+    const lower=text.toLowerCase();
+    let idx=lower.indexOf(lowerQ);
+    if(idx===-1)continue;
+    found=true;
+    const frag=document.createDocumentFragment();
+    let last=0;
+    while(idx!==-1){
+      if(idx>last)frag.appendChild(document.createTextNode(text.slice(last,idx)));
+      const mark=document.createElement('mark');
+      mark.className='search-hl';
+      mark.textContent=text.slice(idx,idx+query.length);
+      frag.appendChild(mark);
+      last=idx+query.length;
+      idx=lower.indexOf(lowerQ,last);
+    }
+    if(last<text.length)frag.appendChild(document.createTextNode(text.slice(last)));
+    node.parentNode.replaceChild(frag,node);
+  }
+  return found;
+}
+function clearMsgHighlights(){
+  document.querySelectorAll('#msgList .search-hl').forEach(mark=>{
+    const parent=mark.parentNode;
+    parent.replaceChild(document.createTextNode(mark.textContent),mark);
+    parent.normalize();
+  });
+}
+function activateMatch(){
+  // Remove active class from all
+  searchMatches.forEach(m=>m.classList.remove('search-hl-active'));
+  if(currentMatchIdx>=0&&currentMatchIdx<searchMatches.length){
+    const m=searchMatches[currentMatchIdx];
+    m.classList.add('search-hl-active');
+    m.scrollIntoView({block:'center',behavior:'smooth'});
+    document.getElementById('msgSearchInfo').textContent=`${currentMatchIdx+1} / ${searchMatches.length}`;
+  }
+}
+function msgSearchNext(){
+  if(searchMatches.length===0)return;
+  currentMatchIdx=(currentMatchIdx+1)%searchMatches.length;
+  activateMatch();
+}
+function msgSearchPrev(){
+  if(searchMatches.length===0)return;
+  currentMatchIdx=(currentMatchIdx-1+searchMatches.length)%searchMatches.length;
+  activateMatch();
+}
+function toggleMsgSearchMode(){
+  msgSearchMode=msgSearchMode==='all'?'matches':'all';
+  document.getElementById('msgSearchModeBtn').textContent=msgSearchMode==='all'?'All':'Matches';
+  // Re-apply dim/hidden
+  const query=document.getElementById('msgSearchInput').value.trim();
+  if(!query)return;
+  document.querySelectorAll('#msgList .msg').forEach(msgEl=>{
+    const hasMatch=msgEl.querySelector('.search-hl');
+    msgEl.classList.remove('msg-dimmed','msg-hidden');
+    if(!hasMatch){
+      if(msgSearchMode==='matches')msgEl.classList.add('msg-hidden');
+      else msgEl.classList.add('msg-dimmed');
+    }
+  });
+}
+function msgSearchKeydown(e){
+  if(e.key==='Enter'){e.preventDefault();if(e.shiftKey)msgSearchPrev();else msgSearchNext()}
+  if(e.key==='Escape'){e.preventDefault();closeMsgSearch()}
+}
+
 // ── Global search ──
 function doGlobalSearch(){
   const q=document.getElementById('globalSearch').value;
@@ -919,14 +1092,18 @@ function doGlobalSearch(){
 
 // ── Keyboard shortcuts ──
 document.addEventListener('keydown',e=>{
+  // Cmd+F / Ctrl+F — open message search when detail view is visible
+  if((e.key==='f'||e.key==='F')&&(e.metaKey||e.ctrlKey)&&document.getElementById('detail').style.display!=='none'){e.preventDefault();e.stopPropagation();toggleMsgSearch();return}
   // Cmd+K / Ctrl+K — focus filter (works from anywhere, including inputs)
   if((e.key==='k'||e.key==='K')&&(e.metaKey||e.ctrlKey)){e.preventDefault();e.stopPropagation();const lv=document.getElementById('listView');if(!lv||lv.style.display==='none'){showList()}setTimeout(()=>{const inp=document.getElementById('filterInput');if(inp){inp.focus();inp.select()}},60);return}
   // Cmd+Enter / Ctrl+Enter — trigger sidebar search (works from anywhere)
   if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();e.stopPropagation();const gs=document.getElementById('globalSearch');if(gs){gs.focus();if(gs.value)doGlobalSearch()}else{showList()}return}
-  // Escape — close modals or go back (works from inputs too)
+  // Escape — close search bar, modals, or go back (works from inputs too)
   if(e.key==='Escape'){
     document.getElementById('kbHelp').style.display='none';
     document.getElementById('infoModal').style.display='none';
+    // If message search is open, close it first
+    if(document.getElementById('msgSearchBar')?.style.display!=='none'&&document.getElementById('detail').style.display!=='none'){closeMsgSearch();return}
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){e.target.blur();return}
     if(document.getElementById('detail').style.display!=='none')goBack();
     return;
