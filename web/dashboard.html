@@ -373,7 +373,10 @@ input:focus,textarea:focus{border-color:var(--accent)}
       <div id="detailInner"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px">
         <h3 style="font-size:.95rem">Conversation</h3>
-        <button class="btn btn-sm" onclick="toggleMsgSearch()" title="Search in conversation (Ctrl+F)">Search</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" id="msgOrderBtn" onclick="toggleMsgOrder()" title="Toggle message order">Newest first</button>
+          <button class="btn btn-sm" onclick="toggleMsgSearch()" title="Search in conversation (Ctrl+F)">Search</button>
+        </div>
       </div>
       <div class="msg-search" id="msgSearchBar" style="display:none">
         <input type="text" id="msgSearchInput" placeholder="Search in conversation..." oninput="debounceMsgSearch()" onkeydown="msgSearchKeydown(event)">
@@ -702,13 +705,14 @@ function batchTag(){
 
 // ── Detail ──
 let currentDetailId=null,msgOffset=0,previousView='listView';
-let allDetailMessages=[],allMessagesLoaded=false,searchMatches=[],currentMatchIdx=-1,msgSearchMode='all',msgSearchTimer=null;
+let allDetailMessages=[],allMessagesLoaded=false,searchMatches=[],currentMatchIdx=-1,msgSearchMode='all',msgSearchTimer=null,msgOrderReversed=false;
 async function showDetail(id){
   currentDetailId=id;msgOffset=0;
-  allDetailMessages=[];allMessagesLoaded=false;searchMatches=[];currentMatchIdx=-1;msgSearchMode='all';
+  allDetailMessages=[];allMessagesLoaded=false;searchMatches=[];currentMatchIdx=-1;msgSearchMode='all';msgOrderReversed=false;
   const sb=document.getElementById('msgSearchBar');if(sb)sb.style.display='none';
   const mi=document.getElementById('msgSearchInput');if(mi)mi.value='';
   const mb=document.getElementById('msgSearchModeBtn');if(mb)mb.textContent='All';
+  const ob=document.getElementById('msgOrderBtn');if(ob)ob.textContent='Newest first';
   // Track which view we came from
   if(document.getElementById('trashView').style.display!=='none')previousView='trashView';
   else if(document.getElementById('overview').style.display!=='none')previousView='overview';
@@ -937,6 +941,29 @@ async function deleteOne(id){
   if(!confirm('Permanently delete this session? This cannot be undone.'))return;
   await apiDel(`/api/trash/${id}`);
   showTrash();toast('Session permanently deleted');
+}
+
+// ── Message order toggle ──
+async function toggleMsgOrder(){
+  msgOrderReversed=!msgOrderReversed;
+  document.getElementById('msgOrderBtn').textContent=msgOrderReversed?'Oldest first':'Newest first';
+  // If all messages loaded, just reverse the DOM
+  if(allMessagesLoaded&&allDetailMessages.length){
+    const ml=document.getElementById('msgList');
+    const children=Array.from(ml.children);
+    ml.innerHTML='';
+    children.reverse().forEach(c=>ml.appendChild(c));
+  }else{
+    // Load all messages first, then show reversed
+    await ensureAllMessagesLoaded();
+    const ml=document.getElementById('msgList');
+    const children=Array.from(ml.children);
+    ml.innerHTML='';
+    children.reverse().forEach(c=>ml.appendChild(c));
+  }
+  // Re-apply search highlights if active
+  const query=document.getElementById('msgSearchInput')?.value?.trim();
+  if(query)executeMsgSearch();
 }
 
 // ── In-conversation message search ──
