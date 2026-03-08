@@ -4,8 +4,9 @@
 
 | Version | Supported |
 |---------|-----------|
-| 1.x     | Yes       |
-| < 1.0   | No        |
+| 4.x     | Yes       |
+| 3.x     | No        |
+| < 3.0   | No        |
 
 ## Reporting a Vulnerability
 
@@ -29,7 +30,11 @@ Please do **not** open a public GitHub issue for security vulnerabilities.
 ## Scope
 
 This tool runs locally and serves a web dashboard on localhost. Key security considerations:
-- The API server binds to localhost only
+- The API server binds to `127.0.0.1` only
 - CORS is restricted to localhost origins
-- Session data is read-only (original JSONL files are never modified)
-- No authentication is required (local-only tool)
+- Body size limited to 1 MB
+- Session data is read-only by default; `csesh rename` modifies JSONL files with backup + atomic write
+- All HTML rendered in the dashboard is sanitized via DOMPurify
+- No external network requests — vendor libraries (Chart.js, marked, DOMPurify) are bundled locally
+- No authentication required (local-only tool)
+- Terminal commands validated against a strict allowlist pattern

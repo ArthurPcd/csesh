@@ -15,9 +15,9 @@ npm link  # makes `csesh` available globally
 
 - **ESM only** — all files use `import`/`export`, no CommonJS
 - **No build step** — source is what ships
-- **No external CDN additions** — dashboard.html already includes Chart.js and marked.js, no new CDN dependencies
+- **No external CDN additions** — dashboard.html vendors Chart.js, marked, and DOMPurify locally
 - **Native Node.js** — no Express or other HTTP frameworks for the server
-- **Minimal dependencies** — only `commander`, `chalk`, and `cli-table3`
+- **Zero npm dependencies** — CLI parsing, colors, and table formatting are native implementations in `lib/`
 
 ## Making Changes
 
