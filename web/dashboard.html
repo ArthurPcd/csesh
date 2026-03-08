@@ -890,7 +890,7 @@ function goBack(){
   document.getElementById('detail').style.display='none';
   if(previousView==='trashView'){document.getElementById('trashView').style.display=''}
   else if(previousView==='overview'){document.getElementById('overview').style.display=''}
-  else{document.getElementById('listView').style.display=''}
+  else{document.getElementById('browseNav').style.display='';document.getElementById('listView').style.display=''}
 }
 
 // ── Row click (selection mode vs detail) ──

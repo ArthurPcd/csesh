@@ -311,7 +311,7 @@ async function handleRequest(req, res) {
       const sessions = await getSessions();
       const stats = computeStats(sessions, params.project || null);
       // Add trash/savings data
-      const trashItems = await listTrash();
+      const trashItems = await listTrash() || [];
       stats.trashedCount = trashItems.length;
       stats.trashedSize = trashItems.reduce((sum, i) => sum + (i.fileSizeBytes || 0), 0);
       stats.version = PKG_VERSION;
