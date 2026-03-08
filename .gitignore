@@ -1,3 +1,6 @@
+# Init marker (local runtime)
+.csesh-init
+
 # User data (generated at runtime)
 cache.json
 metadata.json
