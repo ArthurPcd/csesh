@@ -1,0 +1,109 @@
+name: Bug Report
+description: Report a bug in csesh CLI or web dashboard
+title: "[Bug] "
+labels: ["type:bug", "status:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in the fields below so a maintainer (or AFK agent) can reproduce and triage quickly.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of what the bug is. Include error messages verbatim.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands or click-path to trigger the bug.
+      placeholder: |
+        1. Run `csesh list --project foo`
+        2. Open the web dashboard with `csesh web`
+        3. Click on "Sessions" → ...
+        4. See error: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: input
+    id: csesh-version
+    attributes:
+      label: csesh version
+      description: Run `csesh --version` or check `package.json`
+      placeholder: "e.g. 4.2.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How did you install csesh?
+      options:
+        - npm (npm install -g @arthurpcd/csesh)
+        - npx (npx @arthurpcd/csesh)
+        - Homebrew (brew install arthurpcd/tap/csesh)
+        - From source (git clone)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: claude-code-version
+    attributes:
+      label: Claude Code version
+      description: Run `claude --version`
+      placeholder: "e.g. 2.1.88"
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: Run `node --version`
+      placeholder: "e.g. v22.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "e.g. macOS 15.3, Ubuntu 24.04, Windows 11"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      options:
+        - CLI (csesh list / search / cleanup)
+        - Web dashboard (csesh web)
+        - API server
+        - Classifier / analyzer
+        - Cache / metadata
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional)
+      description: Paste any relevant terminal output, browser console errors, or stack traces.
+      render: shell
+    validations:
+      required: false

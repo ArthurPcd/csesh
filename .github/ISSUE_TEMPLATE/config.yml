@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the docs
+    url: https://github.com/ArthurPcd/csesh#readme
+    about: Most CLI and dashboard usage is documented in the README.
+  - name: Security disclosure
+    url: https://github.com/ArthurPcd/csesh/security/policy
+    about: For security issues, please follow SECURITY.md — do not file a public issue.
+  - name: Contact the maintainer
+    url: https://arthurpacaud.fr/contact
+    about: For private or commercial questions (Pacaud Services).

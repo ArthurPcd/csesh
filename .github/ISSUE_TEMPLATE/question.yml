@@ -1,0 +1,51 @@
+name: Question / Support
+description: Ask a question about using csesh
+title: "[Question] "
+labels: ["type:docs", "status:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Quick check first:
+        - The [README](https://github.com/ArthurPcd/csesh/blob/main/README.md) covers most CLI usage
+        - [Open issues](https://github.com/ArthurPcd/csesh/issues) might already have your answer
+        - For real-time discussion, see GitHub Discussions
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What are you trying to do? What's blocking you?
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Commands run, docs read, related issues searched.
+    validations:
+      required: false
+
+  - type: input
+    id: csesh-version
+    attributes:
+      label: csesh version (if relevant)
+      placeholder: "e.g. 4.2.1"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic area
+      options:
+        - Installation / setup
+        - CLI usage
+        - Web dashboard
+        - Session classification
+        - Cleanup / safety
+        - Integration with other tools
+        - Other
+    validations:
+      required: true
