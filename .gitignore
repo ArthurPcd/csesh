@@ -10,8 +10,14 @@ trash-manifest.json
 # Local config overrides (config.default.json is tracked, not this one)
 config.json
 
-# Content drafts — not for the repo
-docs/
+# Content drafts — not for the repo (files only, dirs allowed so docs/agents/ is reachable)
+docs/*
+!docs/agents/
+!docs/adr/
+
+# Local Claude project worktrees/sessions (never commit)
+.claude/
+src-tauri/
 
 # Secrets
 .env
